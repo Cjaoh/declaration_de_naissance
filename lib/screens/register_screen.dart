@@ -1,6 +1,5 @@
-import '../db/database_helper.dart';
-import '../utils/translate.dart';
 import 'package:flutter/material.dart';
+import '../db/database_helper.dart';
 
 class RegisterScreen extends StatefulWidget {
   static const String routeName = '/register';
@@ -26,12 +25,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await Future.delayed(const Duration(seconds: 1)); // Simuler l'inscription
+      final dbHelper = DatabaseHelper.instance;
+      final user = await dbHelper.getUserByEmail(_emailController.text);
+
+      if (user == null) {
+        await dbHelper.insertUser({
+          'email': _emailController.text,
+          'password': _passwordController.text,
+        });
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Inscription réussie !')),
+        );
+        Navigator.pop(context);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Un utilisateur avec cet email existe déjà')),
+        );
+      }
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Inscription réussie !')),
+        SnackBar(content: Text('Une erreur est survenue: $e')),
       );
-      Navigator.pop(context); // Retour à la connexion
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -48,7 +66,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr(context, 'settings'))),
+      appBar: AppBar(title: const Text('Inscription')),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -62,9 +80,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   prefixIcon: Icon(Icons.email),
                 ),
                 keyboardType: TextInputType.emailAddress,
-                validator: (value) => value?.isEmpty ?? true
-                    ? 'Veuillez entrer un email valide'
-                    : null,
+                validator: (value) =>
+                    value?.isEmpty ?? true ? 'Veuillez entrer un email valide' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -73,16 +90,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   labelText: 'Mot de passe',
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword
-                        ? Icons.visibility
-                        : Icons.visibility_off),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    icon: Icon(
+                        _obscurePassword ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
                 obscureText: _obscurePassword,
-                validator: (value) => ((value?.length ?? 0) < 6)
-                    ? 'Minimum 6 caractères'
-                    : null,
+                validator: (value) =>
+                    ((value?.length ?? 0) < 6) ? 'Minimum 6 caractères' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -91,16 +107,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   labelText: 'Confirmer le mot de passe',
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscureConfirm
-                        ? Icons.visibility
-                        : Icons.visibility_off),
-                    onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    icon: Icon(
+                        _obscureConfirm ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () =>
+                        setState(() => _obscureConfirm = !_obscureConfirm),
                   ),
                 ),
                 obscureText: _obscureConfirm,
-                validator: (value) => value != _passwordController.text
-                    ? 'Les mots de passe ne correspondent pas'
-                    : null,
+                validator: (value) =>
+                    value != _passwordController.text ? 'Les mots de passe ne correspondent pas' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(

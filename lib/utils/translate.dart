@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
 String tr(BuildContext context, String key) {
   final lang = Localizations.localeOf(context).languageCode;
   switch (key) {
@@ -189,4 +191,31 @@ String tr(BuildContext context, String key) {
     default:
       return key;
   }
+}
+
+class MalagasyMaterialLocalizationsDelegate extends LocalizationsDelegate<MaterialLocalizations> {
+  const MalagasyMaterialLocalizationsDelegate();
+
+  @override
+  bool isSupported(Locale locale) => locale.languageCode == 'mg';
+
+  @override
+  Future<MaterialLocalizations> load(Locale locale) {
+    return SynchronousFuture(MalagasyMaterialLocalizations());
+  }
+
+  @override
+  bool shouldReload(covariant MalagasyMaterialLocalizationsDelegate old) => false;
+}
+
+class MalagasyMaterialLocalizations extends DefaultMaterialLocalizations {
+  @override
+  String get okButtonLabel => 'DIA';
+
+  @override
+  String get cancelButtonLabel => 'TSIA';
+}
+
+class MalagasyLocalizations {
+  static const LocalizationsDelegate<MaterialLocalizations> materialDelegate = MalagasyMaterialLocalizationsDelegate();
 }

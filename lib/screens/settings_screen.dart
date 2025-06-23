@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../main.dart'; // Pour accéder à ThemeAndLocaleProvider
+import '../main.dart'; 
 import '../utils/translate.dart';
 
 class SettingsScreen extends StatelessWidget {

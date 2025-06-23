@@ -19,8 +19,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -33,6 +34,14 @@ class DatabaseHelper {
         dateNaissance TEXT,
         lieu TEXT,
         sexe TEXT,
+        nomPere TEXT,
+        prenomPere TEXT,
+        nomMere TEXT,
+        prenomMere TEXT,
+        statutMarital TEXT,
+        parentsMaries INTEGER,
+        dateMariageParents TEXT,
+        lieuMariageParents TEXT,
         synced INTEGER DEFAULT 0
       )
     ''');
@@ -41,15 +50,50 @@ class DatabaseHelper {
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL
+        password TEXT NOT NULL,
+        name TEXT,
+        profilePicture TEXT
       )
     ''');
   }
 
-  // Déclaration CRUD
+  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    await _addColumnIfNotExists(db, 'declarations', 'statutMarital', 'TEXT');
+    await _addColumnIfNotExists(db, 'declarations', 'parentsMaries', 'INTEGER');
+    await _addColumnIfNotExists(db, 'declarations', 'dateMariageParents', 'TEXT');
+    await _addColumnIfNotExists(db, 'declarations', 'lieuMariageParents', 'TEXT');
+    await _addColumnIfNotExists(db, 'declarations', 'nomPere', 'TEXT');
+    await _addColumnIfNotExists(db, 'declarations', 'prenomPere', 'TEXT');
+    await _addColumnIfNotExists(db, 'declarations', 'nomMere', 'TEXT');
+    await _addColumnIfNotExists(db, 'declarations', 'prenomMere', 'TEXT');
+  }
+
+  Future _addColumnIfNotExists(Database db, String table, String column, String type) async {
+    var result = await db.rawQuery("PRAGMA table_info($table)");
+    var columnExists = result.any((row) => row['name'] == column);
+
+    if (!columnExists) {
+      try {
+        await db.execute("ALTER TABLE $table ADD COLUMN $column $type");
+      } catch (e) {
+        print("Error adding column $column to $table: $e");
+      }
+    }
+  }
+
   Future<int> insertDeclaration(Map<String, dynamic> data) async {
     final db = await instance.database;
     return await db.insert('declarations', data);
+  }
+
+  Future<int> updateDeclaration(int id, Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.update(
+      'declarations',
+      data,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<List<Map<String, dynamic>>> getDeclarations() async {
@@ -60,23 +104,38 @@ class DatabaseHelper {
   Future<void> deleteDeclaration(int id) async {
     final db = await instance.database;
     await db.delete(
-      'declarations', // Remplace par le nom exact de ta table si besoin
+      'declarations',
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
-  // User CRUD (pour l'inscription)
-  Future<int> insertUser(Map<String, dynamic> data) async {
+  Future<int> insertUser(Map<String, dynamic> user) async {
     final db = await instance.database;
-    return await db.insert('users', data);
+    return await db.insert('users', user);
   }
 
   Future<Map<String, dynamic>?> getUserByEmail(String email) async {
     final db = await instance.database;
-    final res = await db.query('users', where: 'email = ?', whereArgs: [email]);
-    return res.isNotEmpty ? res.first : null;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+
+    if (maps.isNotEmpty) {
+      return maps.first;
+    }
+    return null;
   }
 
-  // Pour la synchro, tu peux ajouter d'autres méthodes plus tard
+  Future<int> updateUserProfilePicture(String email, String profilePicturePath) async {
+    final db = await instance.database;
+    return await db.update(
+      'users',
+      {'profilePicture': profilePicturePath},
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+  }
 }

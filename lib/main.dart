@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 import 'screens/splash_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -9,51 +11,18 @@ import 'screens/declaration_list.dart';
 import 'screens/sync_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/register_screen.dart';
+import 'utils/translate.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeAndLocaleProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ThemeAndLocaleProvider()),
+        Provider(create: (context) => const FlutterSecureStorage()),
+      ],
       child: const MyApp(),
     ),
   );
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = Provider.of<ThemeAndLocaleProvider>(context);
-    return MaterialApp(
-      title: 'Déclaration Naissance',
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
-      themeMode: provider.themeMode,
-      locale: provider.locale,
-      supportedLocales: const [
-        Locale('fr'), // Français
-        Locale('en'), // Anglais
-        Locale('mg'), // Malgache
-      ],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      initialRoute: SplashScreen.routeName,
-      routes: {
-        SplashScreen.routeName: (context) => const SplashScreen(),
-        AuthScreen.routeName: (context) => const AuthScreen(),
-        DashboardScreen.routeName: (context) => const DashboardScreen(),
-        DeclarationForm.routeName: (context) => const DeclarationForm(),
-        DeclarationList.routeName: (context) => const DeclarationList(),
-        SyncScreen.routeName: (context) => const SyncScreen(),
-        SettingsScreen.routeName: (context) => const SettingsScreen(),
-        RegisterScreen.routeName: (context) => const RegisterScreen(),
-      },
-    );
-  }
 }
 
 class ThemeAndLocaleProvider extends ChangeNotifier {
@@ -71,5 +40,55 @@ class ThemeAndLocaleProvider extends ChangeNotifier {
   void setLocale(Locale locale) {
     _locale = locale;
     notifyListeners();
+  }
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<ThemeAndLocaleProvider>();
+
+    return MaterialApp(
+      title: 'Déclaration Naissance',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      themeMode: provider.themeMode,
+      locale: provider.locale,
+      supportedLocales: const [
+        Locale('fr'),
+        Locale('en'),
+        Locale('mg'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        MalagasyLocalizations.materialDelegate,
+      ],
+      localeResolutionCallback: (locale, supportedLocales) {
+        if (locale != null) {
+          for (var supportedLocale in supportedLocales) {
+            if (supportedLocale.languageCode == locale.languageCode) {
+              return supportedLocale;
+            }
+          }
+        }
+        return supportedLocales.first;
+      },
+      initialRoute: SplashScreen.routeName,
+      routes: {
+        SplashScreen.routeName: (context) => const SplashScreen(),
+        AuthScreen.routeName: (context) => const AuthScreen(),
+        DashboardScreen.routeName: (context) => const DashboardScreen(),
+        DeclarationForm.routeName: (context) => const DeclarationForm(),
+        DeclarationList.routeName: (context) => const DeclarationList(),
+        SyncScreen.routeName: (context) => const SyncScreen(),
+        SettingsScreen.routeName: (context) => const SettingsScreen(),
+        RegisterScreen.routeName: (context) => const RegisterScreen(),
+      },
+    );
   }
 }

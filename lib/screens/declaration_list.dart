@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
-import '../utils/translate.dart';
+import 'declaration_form.dart';
 
 class DeclarationList extends StatefulWidget {
   static const String routeName = '/list';
 
-  const DeclarationList({super.key});
+  const DeclarationList({Key? key}) : super(key: key);
 
   @override
   State<DeclarationList> createState() => _DeclarationListState();
@@ -16,6 +16,7 @@ class _DeclarationListState extends State<DeclarationList> {
   List<Map<String, dynamic>> _declarations = [];
   List<Map<String, dynamic>> _filteredDeclarations = [];
   final TextEditingController _searchController = TextEditingController();
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -31,10 +32,12 @@ class _DeclarationListState extends State<DeclarationList> {
   }
 
   Future<void> _loadDeclarations() async {
+    setState(() => _isLoading = true);
     final data = await DatabaseHelper.instance.getDeclarations();
     setState(() {
       _declarations = data;
       _filteredDeclarations = data;
+      _isLoading = false;
     });
   }
 
@@ -43,16 +46,19 @@ class _DeclarationListState extends State<DeclarationList> {
     setState(() {
       _filteredDeclarations = _declarations.where((d) {
         return (d['nom'] ?? '').toLowerCase().contains(query) ||
-               (d['prenom'] ?? '').toLowerCase().contains(query);
+               (d['prenom'] ?? '').toLowerCase().contains(query) ||
+               (d['nomPere'] ?? '').toLowerCase().contains(query) ||
+               (d['nomMere'] ?? '').toLowerCase().contains(query);
       }).toList();
     });
   }
 
   void _editDeclaration(Map<String, dynamic> declaration) async {
-    final result = await Navigator.pushNamed(
+    final result = await Navigator.push(
       context,
-      '/form',
-      arguments: declaration,
+      MaterialPageRoute(
+        builder: (context) => DeclarationForm(declaration: declaration),
+      ),
     );
     if (result == true) {
       _loadDeclarations();
@@ -63,18 +69,207 @@ class _DeclarationListState extends State<DeclarationList> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Supprimer'),
+        title: const Text('Confirmation'),
         content: const Text('Voulez-vous vraiment supprimer cette déclaration ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Supprimer')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+    );
+
+    if (confirm == true) {
+      await DatabaseHelper.instance.deleteDeclaration(id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Déclaration supprimée avec succès'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Color(0xFF4CAF9E),
+          ),
+        );
+      }
+      _loadDeclarations();
+    }
+  }
+
+  Widget _buildStatsCard() {
+    int garcons = _filteredDeclarations.where((d) => d['sexe'] == 'M').length;
+    int filles = _filteredDeclarations.where((d) => d['sexe'] == 'F').length;
+    int maries = _filteredDeclarations.where((d) => d['parentsMaries'] == 1).length;
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildStatItem(Icons.male, 'Garçons', garcons, Colors.blue),
+                _buildStatItem(Icons.female, 'Filles', filles, Colors.pink),
+                _buildStatItem(Icons.family_restroom, 'Mariés', maries, const Color(0xFF4CAF9E)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Total: ${_filteredDeclarations.length} déclarations',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(IconData icon, String label, int count, Color color) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 4),
+        Text(
+          count.toString(),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDeclarationItem(Map<String, dynamic> decl, int index) {
+    final isMarried = decl['parentsMaries'] == 1;
+
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _editDeclaration(decl),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${decl['nom']} ${decl['prenom']}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Icon(
+                    decl['sexe'] == 'M' ? Icons.male : Icons.female,
+                    color: decl['sexe'] == 'M' ? Colors.blue : Colors.pink,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Né(e) le : ${DateFormat('dd/MM/yyyy').format(DateTime.parse(decl['dateNaissance']))}',
+                style: const TextStyle(color: Colors.grey),
+              ),
+              Text(
+                'Lieu : ${decl['lieu'] ?? 'Non spécifié'}',
+                style: const TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 12),
+              _buildParentInfo('Père', decl['nomPere'], decl['prenomPere']),
+              _buildParentInfo('Mère', decl['nomMere'], decl['prenomMere']),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    isMarried ? Icons.favorite : Icons.favorite_border,
+                    color: isMarried ? Colors.red : Colors.grey,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isMarried ? 'Parents mariés' : 'Parents non mariés',
+                    style: TextStyle(
+                      color: isMarried ? const Color(0xFF4CAF9E) : Colors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (isMarried && decl['dateMariageParents'] != null) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      'le ${DateFormat('dd/MM/yyyy').format(DateTime.parse(decl['dateMariageParents']))}',
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ]
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.orange),
+                    onPressed: () => _editDeclaration(decl),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteDeclaration(decl['id']),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildParentInfo(String role, String? nom, String? prenom) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Text(
+            '$role : ',
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          Text(
+            '${nom ?? 'Non spécifié'} ${prenom ?? ''}',
+            style: const TextStyle(color: Colors.grey),
+          ),
         ],
       ),
     );
-    if (confirm == true) {
-      await DatabaseHelper.instance.deleteDeclaration(id);
-      _loadDeclarations();
-    }
   }
 
   @override
@@ -82,141 +277,77 @@ class _DeclarationListState extends State<DeclarationList> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Liste des Déclarations'),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: const Color(0xFF4CAF9E),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Rechercher par nom ou prénom',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ),
-          Expanded(
-            child: _filteredDeclarations.isEmpty
-                ? const Center(child: Text('Aucune déclaration enregistrée'))
-                : ListView.builder(
-                    padding: const EdgeInsets.all(8),
-                    itemCount: _filteredDeclarations.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        int garcons = _filteredDeclarations.where((d) => d['sexe'] == 'M').length;
-                        int filles = _filteredDeclarations.where((d) => d['sexe'] == 'F').length;
-                        return Card(
-                          color: Colors.blue[50],
-                          margin: const EdgeInsets.only(bottom: 16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.male, color: Colors.blue),
-                                    const SizedBox(width: 8),
-                                    Text('Garçons: $garcons', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.female, color: Colors.pink),
-                                    const SizedBox(width: 8),
-                                    Text('Filles: $filles', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-                      final decl = _filteredDeclarations[index - 1];
-                      return AnimatedListItem(
-                        index: index - 1,
-                        child: Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ListTile(
-                            title: Text(decl['nom']),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  decl['dateNaissance'] != null
-                                    ? DateFormat('dd/MM/yyyy').format(DateTime.parse(decl['dateNaissance']))
-                                    : '',
-                                ),
-                                Text(decl['lieu'] ?? ''),
-                              ],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  decl['sexe'] == 'M' ? Icons.male : Icons.female,
-                                  color: decl['sexe'] == 'M' ? Colors.blue : Colors.pink,
-                                ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.orange),
-                                  onPressed: () => _editDeclaration(decl),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _deleteDeclaration(decl['id']),
-                                ),
-                              ],
-                            ),
-                            onTap: () => _editDeclaration(decl),
-                          ),
-                        ),
-                      );
-                    },
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Rechercher...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    ),
                   ),
-          ),
-        ],
-      ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _filteredDeclarations.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.info_outline, size: 48, color: Colors.grey),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _searchController.text.isEmpty
+                                      ? 'Aucune déclaration enregistrée'
+                                      : 'Aucun résultat trouvé',
+                                  style: const TextStyle(fontSize: 18, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _filteredDeclarations.length + 1,
+                            itemBuilder: (context, index) {
+                              if (index == 0) return _buildStatsCard();
+                              return _buildDeclarationItem(
+                                _filteredDeclarations[index - 1],
+                                index - 1,
+                              );
+                            },
+                          ),
+                  ),
+                ),
+              ],
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await Navigator.pushNamed(context, '/form');
-          _loadDeclarations(); // Recharge la liste après retour du formulaire
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const DeclarationForm(),
+            ),
+          );
+          _loadDeclarations();
         },
-        child: const Icon(Icons.add),
+        backgroundColor: const Color(0xFF4CAF9E),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
-    );
-  }
-}
-
-class AnimatedListItem extends StatelessWidget {
-  final int index;
-  final Widget child;
-
-  const AnimatedListItem({
-    required this.index,
-    required this.child,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 300 + (index * 100)),
-      tween: Tween(begin: 0, end: 1),
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Transform.translate(
-            offset: Offset((1 - value) * 50, 0),
-            child: child,
-          ),
-        );
-      },
-      child: child,
     );
   }
 }
