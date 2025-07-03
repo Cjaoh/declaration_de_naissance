@@ -3,6 +3,7 @@ import '../utils/translate.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; 
+import '../utils/translate.dart';
 
 class SyncScreen extends StatefulWidget {
   static const String routeName = '/sync';

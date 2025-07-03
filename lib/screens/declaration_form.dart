@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
+import '../utils/translate.dart';
 
 class DeclarationForm extends StatefulWidget {
   static const String routeName = '/form';
@@ -15,26 +16,23 @@ class DeclarationForm extends StatefulWidget {
 class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _scrollController = ScrollController();
-
   final _nomController = TextEditingController();
   final _prenomController = TextEditingController();
   final _lieuController = TextEditingController();
   DateTime? _dateNaissance;
   String? _sexe;
-
   final _nomPereController = TextEditingController();
   final _prenomPereController = TextEditingController();
+  String? _statutPere;
   final _nomMereController = TextEditingController();
   final _prenomMereController = TextEditingController();
-
+  String? _statutMere;
   String? _statutMaritalParents;
   bool _parentsMaries = false;
   DateTime? _dateMariageParents;
   String? _lieuMariageParents;
-
   bool _isSubmitting = false;
   bool _showMarriageDetails = false;
-
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
   late Animation<Offset> _slideAnimation;
@@ -46,12 +44,10 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-
     _opacityAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOut,
     );
-
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
@@ -61,7 +57,6 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
         curve: Curves.easeOutQuart,
       ),
     );
-
     _animationController.forward();
 
     if (widget.declaration != null) {
@@ -74,8 +69,10 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
       _sexe = widget.declaration!['sexe'];
       _nomPereController.text = widget.declaration!['nomPere'] ?? '';
       _prenomPereController.text = widget.declaration!['prenomPere'] ?? '';
+      _statutPere = widget.declaration!['statutPere'] ?? 'Vivant';
       _nomMereController.text = widget.declaration!['nomMere'] ?? '';
       _prenomMereController.text = widget.declaration!['prenomMere'] ?? '';
+      _statutMere = widget.declaration!['statutMere'] ?? 'Vivant';
       _statutMaritalParents = widget.declaration!['statutMarital'];
       _parentsMaries = widget.declaration!['parentsMaries'] == 1;
       _dateMariageParents = widget.declaration!['dateMariageParents'] != null
@@ -107,7 +104,6 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-
     if (picked != null) {
       setState(() {
         if (isMarriageDate) {
@@ -125,21 +121,25 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
       _showValidationError('Veuillez sélectionner une date de naissance');
       return;
     }
-    if (_parentsMaries && _dateMariageParents == null) {
-      _showValidationError('Veuillez sélectionner la date de mariage des parents');
-      return;
+    if (_parentsMaries) {
+      if (_dateMariageParents == null) {
+        _showValidationError('Veuillez sélectionner la date de mariage des parents');
+        return;
+      }
+      if (_lieuMariageParents == null || _lieuMariageParents!.isEmpty) {
+        _showValidationError('Veuillez indiquer le lieu de mariage des parents');
+        return;
+      }
+      if (_nomPereController.text.isEmpty || _prenomPereController.text.isEmpty) {
+        _showValidationError('Veuillez compléter les informations du père');
+        return;
+      }
     }
-    if (_parentsMaries && (_lieuMariageParents == null || _lieuMariageParents!.isEmpty)) {
-      _showValidationError('Veuillez indiquer le lieu de mariage des parents');
-      return;
-    }
-    if (!_parentsMaries && (_nomMereController.text.isEmpty || _prenomMereController.text.isEmpty)) {
+    if (_nomMereController.text.isEmpty || _prenomMereController.text.isEmpty) {
       _showValidationError('Veuillez compléter les informations de la mère');
       return;
     }
-
     setState(() => _isSubmitting = true);
-
     try {
       final data = {
         'nom': _nomController.text,
@@ -147,25 +147,24 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
         'dateNaissance': _dateNaissance!.toIso8601String(),
         'lieu': _lieuController.text,
         'sexe': _sexe,
-        'nomPere': _parentsMaries ? _nomPereController.text : null,
-        'prenomPere': _parentsMaries ? _prenomPereController.text : null,
+        'nomPere': _nomPereController.text,
+        'prenomPere': _prenomPereController.text,
+        'statutPere': _statutPere,
         'nomMere': _nomMereController.text,
         'prenomMere': _prenomMereController.text,
+        'statutMere': _statutMere,
         'statutMarital': _statutMaritalParents,
         'parentsMaries': _parentsMaries ? 1 : 0,
         'dateMariageParents': _dateMariageParents?.toIso8601String(),
         'lieuMariageParents': _lieuMariageParents,
         'synced': 0,
       };
-
       if (widget.declaration != null) {
         await DatabaseHelper.instance.updateDeclaration(widget.declaration!['id'], data);
       } else {
         await DatabaseHelper.instance.insertDeclaration(data);
       }
-
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Déclaration enregistrée avec succès!'),
@@ -340,23 +339,21 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
                     ),
                   ],
                 )
-              : Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildTextField(
-                      controller: _nomMereController,
-                      label: 'Nom de la mère',
-                      isRequired: true,
-                    ),
-                    _buildTextField(
-                      controller: _prenomMereController,
-                      label: 'Prénom de la mère',
-                      isRequired: true,
-                    ),
-                  ],
-                ),
+              : const SizedBox.shrink(),
         ),
       ],
+    );
+  }
+
+  Widget _buildParentStatusField(String parent, String? value, ValueChanged<String?> onChanged) {
+    return _buildDropdownField(
+      value: value,
+      label: 'Statut du $parent',
+      items: const [
+        DropdownMenuItem(value: 'Vivant', child: Text('Vivant')),
+        DropdownMenuItem(value: 'Décédé', child: Text('Décédé')),
+      ],
+      onChanged: onChanged,
     );
   }
 
@@ -479,11 +476,13 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
                       _buildSectionTitle('Statut marital des parents'),
                       _buildMaritalStatusField(),
                       _buildSectionTitle('Informations du père'),
-                      _parentsMaries ? _buildTextField(controller: _nomPereController, label: 'Nom du père') : const SizedBox.shrink(),
-                      _parentsMaries ? _buildTextField(controller: _prenomPereController, label: 'Prénom du père') : const SizedBox.shrink(),
+                      _buildTextField(controller: _nomPereController, label: 'Nom du père', isRequired: _parentsMaries),
+                      _buildTextField(controller: _prenomPereController, label: 'Prénom du père', isRequired: _parentsMaries),
+                      _buildParentStatusField('père', _statutPere, (value) => setState(() => _statutPere = value)),
                       _buildSectionTitle('Informations de la mère'),
                       _buildTextField(controller: _nomMereController, label: 'Nom de la mère'),
                       _buildTextField(controller: _prenomMereController, label: 'Prénom de la mère'),
+                      _buildParentStatusField('mère', _statutMere, (value) => setState(() => _statutMere = value)),
                       const SizedBox(height: 24),
                       _buildSubmitButton(),
                       const SizedBox(height: 16),

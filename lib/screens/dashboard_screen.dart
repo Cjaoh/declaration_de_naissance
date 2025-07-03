@@ -5,12 +5,11 @@ import 'package:badges/badges.dart' as badges;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-
 import 'declaration_list.dart';
 import 'sync_screen.dart';
 import 'settings_screen.dart';
 import 'auth_screen.dart';
-import '../db/database_helper.dart'; 
+import '../db/database_helper.dart';
 
 class DashboardScreen extends StatefulWidget {
   static const String routeName = '/dashboard';
@@ -25,16 +24,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final PageController _pageController = PageController(viewportFraction: 0.85);
   int _currentPage = 0;
-  String? _userName;
+  String? _userFirstName;
+  String? _userLastName;
   String? _userEmail;
   String? _profilePicture;
-
   final List<String> imgList = [
     'assets/images/1.png',
     'assets/images/2.png',
     'assets/images/3.png',
   ];
-
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
@@ -48,23 +46,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _userEmail = await _storage.read(key: 'user_email');
     final dbHelper = DatabaseHelper.instance;
     final user = await dbHelper.getUserByEmail(_userEmail!);
-
     setState(() {
-      _userName = user?['name'] ?? "User Name";
+      _userFirstName = user?['firstName'] ?? "User";
+      _userLastName = user?['lastName'] ?? "Name";
       _userEmail = _userEmail ?? "user@example.com";
-      _profilePicture = user?['profilePicture'] ?? "https://example.com/path/to/profile/picture.jpg";
+      _profilePicture = user?['profilePicture'] ?? "assets/images/default_profile.png";
     });
   }
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-
     if (pickedFile != null) {
       setState(() {
         _profilePicture = pickedFile.path;
       });
-
-      // Mettre à jour le chemin de l'image de profil dans la base de données
       final dbHelper = DatabaseHelper.instance;
       await dbHelper.updateUserProfilePicture(_userEmail!, pickedFile.path);
     }
@@ -87,7 +82,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -188,8 +182,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return OpenContainer(
       transitionDuration: const Duration(milliseconds: 700),
       openBuilder: (context, _) => _buildFullScreenImage(index),
-      closedBuilder: (context, openContainer) =>
-          _buildCarouselThumbnail(index, openContainer),
+      closedBuilder: (context, openContainer) => _buildCarouselThumbnail(index, openContainer),
       transitionType: ContainerTransitionType.fadeThrough,
       closedColor: Colors.transparent,
       middleColor: Colors.transparent,
@@ -249,8 +242,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   imgList[index],
                   fit: BoxFit.cover,
                   width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) =>
-                      _buildImageError(),
+                  errorBuilder: (context, error, stackTrace) => _buildImageError(),
                 ),
               ),
             ),
@@ -274,9 +266,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: _currentPage == index ? 24 : 8,
             height: 8,
             decoration: BoxDecoration(
-              color: _currentPage == index
-                  ? const Color(0xFF4CAF9E)
-                  : Colors.grey.withOpacity(0.5),
+              color: _currentPage == index ? const Color(0xFF4CAF9E) : Colors.grey.withOpacity(0.5),
               borderRadius: BorderRadius.circular(4),
               boxShadow: [
                 if (_currentPage == index)
@@ -305,8 +295,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         icon: Icons.list_alt,
         title: 'Liste',
         color: Colors.blue,
-        onTap: () =>
-            _navigateWithAnimation(context, DeclarationList.routeName),
+        onTap: () => _navigateWithAnimation(context, DeclarationList.routeName),
       ),
       _DashboardItem(
         icon: Icons.sync,
@@ -318,11 +307,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         icon: Icons.settings,
         title: 'Paramètres',
         color: Colors.blue,
-        onTap: () =>
-            _navigateWithAnimation(context, SettingsScreen.routeName),
+        onTap: () {
+          if (_userEmail != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SettingsScreen(currentUserEmail: _userEmail!),
+              ),
+            ).then((_) => _loadUserInfo());
+          }
+        },
       ),
     ];
-
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: AnimationLimiter(
@@ -364,9 +360,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _showNotifications() {
-    // Implement notification logic here
-  }
+  void _showNotifications() {}
 
   void _navigateWithAnimation(BuildContext context, String routeName) {
     final route = _getRouteFromName(routeName);
@@ -381,9 +375,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return const DeclarationList();
       case SyncScreen.routeName:
         return const SyncScreen();
-      case SettingsScreen.routeName:
-        return const SettingsScreen();
       case '/form':
+        return null;
       default:
         return null;
     }
@@ -398,10 +391,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const begin = Offset(0.0, 1.0);
         const end = Offset.zero;
         const curve = Curves.fastOutSlowIn;
-
-        final tween =
-            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
+        final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         return SlideTransition(
           position: animation.drive(tween),
           child: FadeTransition(
@@ -467,7 +457,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _userName ?? 'Agent',
+            '$_userFirstName $_userLastName',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -496,8 +486,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         context,
         icon: Icons.child_care,
         title: 'Déclarations',
-        onTap: () =>
-            _navigateWithAnimation(context, DeclarationList.routeName),
+        onTap: () => _navigateWithAnimation(context, DeclarationList.routeName),
       ),
       _buildDrawerItem(
         context,
@@ -509,8 +498,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         context,
         icon: Icons.settings,
         title: 'Paramètres',
-        onTap: () =>
-            _navigateWithAnimation(context, SettingsScreen.routeName),
+        onTap: () {
+          if (_userEmail != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SettingsScreen(currentUserEmail: _userEmail!),
+              ),
+            ).then((_) => _loadUserInfo());
+          }
+        },
       ),
       const Divider(),
       _buildDrawerItem(

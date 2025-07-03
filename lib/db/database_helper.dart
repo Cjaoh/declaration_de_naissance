@@ -19,13 +19,13 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
-  Future _createDB(Database db, int version) async {
+  Future<void> _createDB(Database db, int version) async {
     await db.execute('''
       CREATE TABLE declarations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,8 +36,10 @@ class DatabaseHelper {
         sexe TEXT,
         nomPere TEXT,
         prenomPere TEXT,
+        statutPere TEXT,
         nomMere TEXT,
         prenomMere TEXT,
+        statutMere TEXT,
         statutMarital TEXT,
         parentsMaries INTEGER,
         dateMariageParents TEXT,
@@ -51,26 +53,34 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
-        name TEXT,
+        firstName TEXT,
+        lastName TEXT,
         profilePicture TEXT
       )
     ''');
   }
 
-  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    await _addColumnIfNotExists(db, 'declarations', 'statutMarital', 'TEXT');
-    await _addColumnIfNotExists(db, 'declarations', 'parentsMaries', 'INTEGER');
-    await _addColumnIfNotExists(db, 'declarations', 'dateMariageParents', 'TEXT');
-    await _addColumnIfNotExists(db, 'declarations', 'lieuMariageParents', 'TEXT');
-    await _addColumnIfNotExists(db, 'declarations', 'nomPere', 'TEXT');
-    await _addColumnIfNotExists(db, 'declarations', 'prenomPere', 'TEXT');
-    await _addColumnIfNotExists(db, 'declarations', 'nomMere', 'TEXT');
-    await _addColumnIfNotExists(db, 'declarations', 'prenomMere', 'TEXT');
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 3) {
+      await _addColumnIfNotExists(db, 'declarations', 'statutPere', 'TEXT');
+      await _addColumnIfNotExists(db, 'declarations', 'statutMere', 'TEXT');
+      await _addColumnIfNotExists(db, 'declarations', 'statutMarital', 'TEXT');
+      await _addColumnIfNotExists(db, 'declarations', 'parentsMaries', 'INTEGER');
+      await _addColumnIfNotExists(db, 'declarations', 'dateMariageParents', 'TEXT');
+      await _addColumnIfNotExists(db, 'declarations', 'lieuMariageParents', 'TEXT');
+      await _addColumnIfNotExists(db, 'declarations', 'nomPere', 'TEXT');
+      await _addColumnIfNotExists(db, 'declarations', 'prenomPere', 'TEXT');
+      await _addColumnIfNotExists(db, 'declarations', 'nomMere', 'TEXT');
+      await _addColumnIfNotExists(db, 'declarations', 'prenomMere', 'TEXT');
+
+      await _addColumnIfNotExists(db, 'users', 'firstName', 'TEXT');
+      await _addColumnIfNotExists(db, 'users', 'lastName', 'TEXT');
+    }
   }
 
-  Future _addColumnIfNotExists(Database db, String table, String column, String type) async {
-    var result = await db.rawQuery("PRAGMA table_info($table)");
-    var columnExists = result.any((row) => row['name'] == column);
+  Future<void> _addColumnIfNotExists(Database db, String table, String column, String type) async {
+    final result = await db.rawQuery("PRAGMA table_info($table)");
+    final columnExists = result.any((row) => row['name'] == column);
 
     if (!columnExists) {
       try {
@@ -101,9 +111,9 @@ class DatabaseHelper {
     return await db.query('declarations', orderBy: 'id DESC');
   }
 
-  Future<void> deleteDeclaration(int id) async {
+  Future<int> deleteDeclaration(int id) async {
     final db = await instance.database;
-    await db.delete(
+    return await db.delete(
       'declarations',
       where: 'id = ?',
       whereArgs: [id],
@@ -134,6 +144,26 @@ class DatabaseHelper {
     return await db.update(
       'users',
       {'profilePicture': profilePicturePath},
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+  }
+
+  Future<int> updateUserFirstName(String email, String firstName) async {
+    final db = await instance.database;
+    return await db.update(
+      'users',
+      {'firstName': firstName},
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+  }
+
+  Future<int> updateUserLastName(String email, String lastName) async {
+    final db = await instance.database;
+    return await db.update(
+      'users',
+      {'lastName': lastName},
       where: 'email = ?',
       whereArgs: [email],
     );

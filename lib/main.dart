@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import 'screens/splash_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -12,6 +11,7 @@ import 'screens/sync_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/register_screen.dart';
 import 'utils/translate.dart';
+import 'screens/edit_profile_screen.dart';
 
 void main() {
   runApp(
@@ -28,15 +28,12 @@ void main() {
 class ThemeAndLocaleProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
   Locale _locale = const Locale('fr');
-
   ThemeMode get themeMode => _themeMode;
   Locale get locale => _locale;
-
   void setThemeMode(ThemeMode mode) {
     _themeMode = mode;
     notifyListeners();
   }
-
   void setLocale(Locale locale) {
     _locale = locale;
     notifyListeners();
@@ -45,11 +42,10 @@ class ThemeAndLocaleProvider extends ChangeNotifier {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ThemeAndLocaleProvider>();
-
+    final storage = Provider.of<FlutterSecureStorage>(context, listen: false);
     return MaterialApp(
       title: 'Déclaration Naissance',
       debugShowCheckedModeBanner: false,
@@ -86,8 +82,16 @@ class MyApp extends StatelessWidget {
         DeclarationForm.routeName: (context) => const DeclarationForm(),
         DeclarationList.routeName: (context) => const DeclarationList(),
         SyncScreen.routeName: (context) => const SyncScreen(),
-        SettingsScreen.routeName: (context) => const SettingsScreen(),
         RegisterScreen.routeName: (context) => const RegisterScreen(),
+        SettingsScreen.routeName: (context) => FutureBuilder<String?>(
+          future: storage.read(key: 'user_email'),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done && snapshot.hasData && snapshot.data != null) {
+              return SettingsScreen(currentUserEmail: snapshot.data!);
+            }
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          },
+        ),
       },
     );
   }

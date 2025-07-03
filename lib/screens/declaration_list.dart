@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
 import 'declaration_form.dart';
+import '../utils/translate.dart';
 
 class DeclarationList extends StatefulWidget {
   static const String routeName = '/list';
-
   const DeclarationList({Key? key}) : super(key: key);
 
   @override
@@ -46,9 +46,9 @@ class _DeclarationListState extends State<DeclarationList> {
     setState(() {
       _filteredDeclarations = _declarations.where((d) {
         return (d['nom'] ?? '').toLowerCase().contains(query) ||
-               (d['prenom'] ?? '').toLowerCase().contains(query) ||
-               (d['nomPere'] ?? '').toLowerCase().contains(query) ||
-               (d['nomMere'] ?? '').toLowerCase().contains(query);
+            (d['prenom'] ?? '').toLowerCase().contains(query) ||
+            (d['nomPere'] ?? '').toLowerCase().contains(query) ||
+            (d['nomMere'] ?? '').toLowerCase().contains(query);
       }).toList();
     });
   }
@@ -203,8 +203,8 @@ class _DeclarationListState extends State<DeclarationList> {
                 style: const TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 12),
-              _buildParentInfo('Père', decl['nomPere'], decl['prenomPere']),
-              _buildParentInfo('Mère', decl['nomMere'], decl['prenomMere']),
+              _buildParentInfo('Père', decl['nomPere'], decl['prenomPere'], decl['statutPere']),
+              _buildParentInfo('Mère', decl['nomMere'], decl['prenomMere'], decl['statutMere']),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -254,7 +254,10 @@ class _DeclarationListState extends State<DeclarationList> {
     );
   }
 
-  Widget _buildParentInfo(String role, String? nom, String? prenom) {
+  Widget _buildParentInfo(String role, String? nom, String? prenom, String? statut) {
+    IconData icon = statut == 'Vivant' ? Icons.check_circle : Icons.highlight_off;
+    Color iconColor = statut == 'Vivant' ? Colors.green : Colors.red;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -263,6 +266,8 @@ class _DeclarationListState extends State<DeclarationList> {
             '$role : ',
             style: const TextStyle(fontWeight: FontWeight.w500),
           ),
+          Icon(icon, color: iconColor, size: 16),
+          const SizedBox(width: 4),
           Text(
             '${nom ?? 'Non spécifié'} ${prenom ?? ''}',
             style: const TextStyle(color: Colors.grey),

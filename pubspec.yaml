@@ -26,14 +26,14 @@ dependencies:
   liquid_progress_indicator: ^0.4.0
   shimmer: ^3.0.0
   carousel_slider: ^5.1.1
-  flutter_secure_storage: ^8.0.0
+  flutter_secure_storage: ^9.2.4
   image_picker: ^1.0.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
-  flutter_launcher_icons: ^0.13.1
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true

@@ -105,9 +105,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 child: Card(
                   elevation: 8,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                  margin: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 32),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                   child: Padding(
                     padding: const EdgeInsets.all(32.0),
                     child: Form(
@@ -131,14 +131,19 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               labelText: 'Email',
                               prefixIcon: Icon(Icons.email),
                               border: OutlineInputBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(12)),
+                                borderRadius: BorderRadius.all(Radius.circular(12)),
                               ),
                             ),
                             keyboardType: TextInputType.emailAddress,
-                            validator: (value) => value?.isEmpty ?? true
-                                ? 'Veuillez entrer un email valide'
-                                : null,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Veuillez entrer un email valide';
+                              }
+                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                                return 'Veuillez entrer un email valide';
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
@@ -147,20 +152,15 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               labelText: 'Mot de passe',
                               prefixIcon: const Icon(Icons.lock),
                               suffixIcon: IconButton(
-                                icon: Icon(_obscurePassword
-                                    ? Icons.visibility
-                                    : Icons.visibility_off),
-                                onPressed: () => setState(
-                                    () => _obscurePassword = !_obscurePassword),
+                                icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                               ),
                               border: const OutlineInputBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(12)),
+                                borderRadius: BorderRadius.all(Radius.circular(12)),
                               ),
                             ),
                             obscureText: _obscurePassword,
-                            validator: (value) =>
-                                ((value?.length ?? 0) < 6) ? 'Minimum 6 caractères' : null,
+                            validator: (value) => ((value?.length ?? 0) < 6) ? 'Minimum 6 caractères' : null,
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton(
@@ -172,16 +172,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               ),
                             ),
                             child: _isLoading
-                                ? const CircularProgressIndicator(
-                                    strokeWidth: 2)
+                                ? const CircularProgressIndicator(strokeWidth: 2)
                                 : const Text('CONNEXION'),
                           ),
                           const SizedBox(height: 12),
                           TextButton(
-                            onPressed: () =>
-                                Navigator.pushNamed(context, '/register'),
-                            child: const Text("Créer un compte",
-                                style: TextStyle(fontSize: 12)),
+                            onPressed: () => Navigator.pushNamed(context, '/register'),
+                            child: const Text("Créer un compte", style: TextStyle(fontSize: 12)),
                           ),
                         ],
                       ),
