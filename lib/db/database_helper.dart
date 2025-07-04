@@ -16,7 +16,6 @@ class DatabaseHelper {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
-
     return await openDatabase(
       path,
       version: 3,
@@ -72,7 +71,6 @@ class DatabaseHelper {
       await _addColumnIfNotExists(db, 'declarations', 'prenomPere', 'TEXT');
       await _addColumnIfNotExists(db, 'declarations', 'nomMere', 'TEXT');
       await _addColumnIfNotExists(db, 'declarations', 'prenomMere', 'TEXT');
-
       await _addColumnIfNotExists(db, 'users', 'firstName', 'TEXT');
       await _addColumnIfNotExists(db, 'users', 'lastName', 'TEXT');
     }
@@ -81,7 +79,6 @@ class DatabaseHelper {
   Future<void> _addColumnIfNotExists(Database db, String table, String column, String type) async {
     final result = await db.rawQuery("PRAGMA table_info($table)");
     final columnExists = result.any((row) => row['name'] == column);
-
     if (!columnExists) {
       try {
         await db.execute("ALTER TABLE $table ADD COLUMN $column $type");
@@ -132,7 +129,6 @@ class DatabaseHelper {
       where: 'email = ?',
       whereArgs: [email],
     );
-
     if (maps.isNotEmpty) {
       return maps.first;
     }
@@ -149,23 +145,13 @@ class DatabaseHelper {
     );
   }
 
-  Future<int> updateUserFirstName(String email, String firstName) async {
+  Future<int> updateUser(String oldEmail, Map<String, dynamic> newData) async {
     final db = await instance.database;
     return await db.update(
       'users',
-      {'firstName': firstName},
+      newData,
       where: 'email = ?',
-      whereArgs: [email],
-    );
-  }
-
-  Future<int> updateUserLastName(String email, String lastName) async {
-    final db = await instance.database;
-    return await db.update(
-      'users',
-      {'lastName': lastName},
-      where: 'email = ?',
-      whereArgs: [email],
+      whereArgs: [oldEmail],
     );
   }
 }

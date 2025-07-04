@@ -5,6 +5,7 @@ import 'package:badges/badges.dart' as badges;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+
 import 'declaration_list.dart';
 import 'sync_screen.dart';
 import 'settings_screen.dart';
@@ -14,7 +15,7 @@ import '../db/database_helper.dart';
 class DashboardScreen extends StatefulWidget {
   static const String routeName = '/dashboard';
 
-  const DashboardScreen({super.key});
+  const DashboardScreen({Key? key}) : super(key: key);
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -28,11 +29,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _userLastName;
   String? _userEmail;
   String? _profilePicture;
+
   final List<String> imgList = [
     'assets/images/1.png',
     'assets/images/2.png',
     'assets/images/3.png',
   ];
+
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
@@ -44,14 +47,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadUserInfo() async {
     _userEmail = await _storage.read(key: 'user_email');
-    final dbHelper = DatabaseHelper.instance;
-    final user = await dbHelper.getUserByEmail(_userEmail!);
-    setState(() {
-      _userFirstName = user?['firstName'] ?? "User";
-      _userLastName = user?['lastName'] ?? "Name";
-      _userEmail = _userEmail ?? "user@example.com";
-      _profilePicture = user?['profilePicture'] ?? "assets/images/default_profile.png";
-    });
+    if (_userEmail != null) {
+      final dbHelper = DatabaseHelper.instance;
+      final user = await dbHelper.getUserByEmail(_userEmail!);
+      setState(() {
+        _userFirstName = user?['firstName'] ?? "User";
+        _userLastName = user?['lastName'] ?? "Name";
+        _profilePicture = user?['profilePicture'] ?? "assets/images/default_profile.png";
+      });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -319,6 +323,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         },
       ),
     ];
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: AnimationLimiter(
@@ -360,7 +365,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _showNotifications() {}
+  void _showNotifications() {
+    // Implement notification logic here
+  }
 
   void _navigateWithAnimation(BuildContext context, String routeName) {
     final route = _getRouteFromName(routeName);
@@ -548,11 +555,11 @@ class _DashboardItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const _DashboardItem({
+    Key? key,
     required this.icon,
     required this.title,
     required this.color,
     required this.onTap,
-    Key? key,
   }) : super(key: key);
 
   @override
