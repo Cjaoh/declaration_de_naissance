@@ -1,106 +1,105 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
-import '../utils/translate.dart';
 
 class DeclarationForm extends StatefulWidget {
   static const String routeName = '/form';
   final Map<String, dynamic>? declaration;
-
   const DeclarationForm({Key? key, this.declaration}) : super(key: key);
-
   @override
   State<DeclarationForm> createState() => _DeclarationFormState();
 }
 
-class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProviderStateMixin {
+class _DeclarationFormState extends State<DeclarationForm> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _scrollController = ScrollController();
-  final _nomController = TextEditingController();
-  final _prenomController = TextEditingController();
-  final _lieuController = TextEditingController();
+  final Map<String, TextEditingController> _controllers = {};
   DateTime? _dateNaissance;
   String? _sexe;
-  final _nomPereController = TextEditingController();
-  final _prenomPereController = TextEditingController();
+  DateTime? _dateNaissancePere;
+  DateTime? _dateNaissanceMere;
   String? _statutPere;
-  final _nomMereController = TextEditingController();
-  final _prenomMereController = TextEditingController();
   String? _statutMere;
   String? _statutMaritalParents;
   bool _parentsMaries = false;
   DateTime? _dateMariageParents;
-  String? _lieuMariageParents;
-  bool _isSubmitting = false;
   bool _showMarriageDetails = false;
+  bool _isSubmitting = false;
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
   late Animation<Offset> _slideAnimation;
+  late TabController _tabController;
+
+  final Color _mainColor = const Color(0xFF4CAF9E);
+  final Color _accentColor = const Color(0xFFFF9800);
+  final Color _backgroundColor = Colors.white;
+  final Color _textColor = Colors.grey[800]!;
+  final Color _borderColor = Colors.grey[200]!;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _opacityAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutQuart,
-      ),
+    _initializeControllers();
+    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _opacityAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutQuart),
     );
     _animationController.forward();
+    _tabController = TabController(length: 4, vsync: this);
+    if (widget.declaration != null) _populateFields();
+  }
 
-    if (widget.declaration != null) {
-      _nomController.text = widget.declaration!['nom'] ?? '';
-      _prenomController.text = widget.declaration!['prenom'] ?? '';
-      _dateNaissance = widget.declaration!['dateNaissance'] != null
-          ? DateTime.parse(widget.declaration!['dateNaissance'])
-          : null;
-      _lieuController.text = widget.declaration!['lieu'] ?? '';
-      _sexe = widget.declaration!['sexe'];
-      _nomPereController.text = widget.declaration!['nomPere'] ?? '';
-      _prenomPereController.text = widget.declaration!['prenomPere'] ?? '';
-      _statutPere = widget.declaration!['statutPere'] ?? 'Vivant';
-      _nomMereController.text = widget.declaration!['nomMere'] ?? '';
-      _prenomMereController.text = widget.declaration!['prenomMere'] ?? '';
-      _statutMere = widget.declaration!['statutMere'] ?? 'Vivant';
-      _statutMaritalParents = widget.declaration!['statutMarital'];
-      _parentsMaries = widget.declaration!['parentsMaries'] == 1;
-      _dateMariageParents = widget.declaration!['dateMariageParents'] != null
-          ? DateTime.parse(widget.declaration!['dateMariageParents'])
-          : null;
-      _lieuMariageParents = widget.declaration!['lieuMariageParents'];
-      _showMarriageDetails = _parentsMaries;
-    }
+  void _initializeControllers() {
+    _controllers.addAll({
+      'nom': TextEditingController(),
+      'prenom': TextEditingController(),
+      'lieuNaissance': TextEditingController(),
+      'heureNaissance': TextEditingController(),
+      'dateNaissance': TextEditingController(),
+      'nomPere': TextEditingController(),
+      'prenomPere': TextEditingController(),
+      'lieuNaissancePere': TextEditingController(),
+      'professionPere': TextEditingController(),
+      'nationalitePere': TextEditingController(),
+      'adressePere': TextEditingController(),
+      'pieceIdPere': TextEditingController(),
+      'dateNaissancePere': TextEditingController(),
+      'nomMere': TextEditingController(),
+      'prenomMere': TextEditingController(),
+      'nomJeuneFilleMere': TextEditingController(),
+      'lieuNaissanceMere': TextEditingController(),
+      'professionMere': TextEditingController(),
+      'nationaliteMere': TextEditingController(),
+      'adresseMere': TextEditingController(),
+      'pieceIdMere': TextEditingController(),
+      'dateNaissanceMere': TextEditingController(),
+      'lieuMariageParents': TextEditingController(),
+      'nomDeclarant': TextEditingController(),
+      'prenomDeclarant': TextEditingController(),
+      'adresseDeclarant': TextEditingController(),
+      'lienDeclarant': TextEditingController(),
+      'pieceIdDeclarant': TextEditingController(),
+      'certificatAccouchement': TextEditingController(),
+      'livretFamille': TextEditingController(),
+      'acteNaissPere': TextEditingController(),
+      'acteNaissMere': TextEditingController(),
+      'acteReconnaissance': TextEditingController(),
+      'certificatNationalite': TextEditingController(),
+    });
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _scrollController.dispose();
-    _nomController.dispose();
-    _prenomController.dispose();
-    _lieuController.dispose();
-    _nomPereController.dispose();
-    _prenomPereController.dispose();
-    _nomMereController.dispose();
-    _prenomMereController.dispose();
+    for (var controller in _controllers.values) controller.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context, {bool isMarriageDate = false}) async {
+  Future<void> _selectDate(BuildContext context, {required String controllerKey, bool isMarriageDate = false}) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: isMarriageDate ? (_dateMariageParents ?? DateTime.now()) : (_dateNaissance ?? DateTime.now()),
+      initialDate: DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
@@ -109,54 +108,95 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
         if (isMarriageDate) {
           _dateMariageParents = picked;
         } else {
-          _dateNaissance = picked;
+          switch (controllerKey) {
+            case 'dateNaissance': _dateNaissance = picked; break;
+            case 'dateNaissancePere': _dateNaissancePere = picked; break;
+            case 'dateNaissanceMere': _dateNaissanceMere = picked; break;
+          }
         }
+        _updateDateControllerText();
       });
     }
+  }
+
+  void _updateDateControllerText() {
+    if (_dateNaissance != null) _controllers['dateNaissance']!.text = DateFormat('dd/MM/yyyy').format(_dateNaissance!);
+    if (_dateNaissancePere != null) _controllers['dateNaissancePere']!.text = DateFormat('dd/MM/yyyy').format(_dateNaissancePere!);
+    if (_dateNaissanceMere != null) _controllers['dateNaissanceMere']!.text = DateFormat('dd/MM/yyyy').format(_dateNaissanceMere!);
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_dateNaissance == null) {
-      _showValidationError('Veuillez sélectionner une date de naissance');
+      _showValidationError('Veuillez sélectionner la date de naissance de l\'enfant');
+      _tabController.animateTo(0);
       return;
     }
     if (_parentsMaries) {
       if (_dateMariageParents == null) {
         _showValidationError('Veuillez sélectionner la date de mariage des parents');
+        _tabController.animateTo(1);
         return;
       }
-      if (_lieuMariageParents == null || _lieuMariageParents!.isEmpty) {
+      if (_controllers['lieuMariageParents']!.text.isEmpty) {
         _showValidationError('Veuillez indiquer le lieu de mariage des parents');
+        _tabController.animateTo(1);
         return;
       }
-      if (_nomPereController.text.isEmpty || _prenomPereController.text.isEmpty) {
+      if (_controllers['nomPere']!.text.isEmpty || _controllers['prenomPere']!.text.isEmpty) {
         _showValidationError('Veuillez compléter les informations du père');
+        _tabController.animateTo(1);
         return;
       }
     }
-    if (_nomMereController.text.isEmpty || _prenomMereController.text.isEmpty) {
+    if (_controllers['nomMere']!.text.isEmpty || _controllers['prenomMere']!.text.isEmpty) {
       _showValidationError('Veuillez compléter les informations de la mère');
+      _tabController.animateTo(1);
       return;
     }
     setState(() => _isSubmitting = true);
     try {
       final data = {
-        'nom': _nomController.text,
-        'prenom': _prenomController.text,
+        'nom': _controllers['nom']!.text,
+        'prenom': _controllers['prenom']!.text,
         'dateNaissance': _dateNaissance!.toIso8601String(),
-        'lieu': _lieuController.text,
+        'heureNaissance': _controllers['heureNaissance']!.text,
+        'lieuNaissance': _controllers['lieuNaissance']!.text,
         'sexe': _sexe,
-        'nomPere': _nomPereController.text,
-        'prenomPere': _prenomPereController.text,
+        'nomPere': _controllers['nomPere']!.text,
+        'prenomPere': _controllers['prenomPere']!.text,
+        'dateNaissancePere': _dateNaissancePere?.toIso8601String(),
+        'lieuNaissancePere': _controllers['lieuNaissancePere']!.text,
+        'professionPere': _controllers['professionPere']!.text,
+        'nationalitePere': _controllers['nationalitePere']!.text,
+        'adressePere': _controllers['adressePere']!.text,
+        'pieceIdPere': _controllers['pieceIdPere']!.text,
         'statutPere': _statutPere,
-        'nomMere': _nomMereController.text,
-        'prenomMere': _prenomMereController.text,
+        'nomMere': _controllers['nomMere']!.text,
+        'prenomMere': _controllers['prenomMere']!.text,
+        'nomJeuneFilleMere': _controllers['nomJeuneFilleMere']!.text,
+        'dateNaissanceMere': _dateNaissanceMere?.toIso8601String(),
+        'lieuNaissanceMere': _controllers['lieuNaissanceMere']!.text,
+        'professionMere': _controllers['professionMere']!.text,
+        'nationaliteMere': _controllers['nationaliteMere']!.text,
+        'adresseMere': _controllers['adresseMere']!.text,
+        'pieceIdMere': _controllers['pieceIdMere']!.text,
         'statutMere': _statutMere,
         'statutMarital': _statutMaritalParents,
         'parentsMaries': _parentsMaries ? 1 : 0,
         'dateMariageParents': _dateMariageParents?.toIso8601String(),
-        'lieuMariageParents': _lieuMariageParents,
+        'lieuMariageParents': _controllers['lieuMariageParents']!.text,
+        'nomDeclarant': _controllers['nomDeclarant']!.text,
+        'prenomDeclarant': _controllers['prenomDeclarant']!.text,
+        'adresseDeclarant': _controllers['adresseDeclarant']!.text,
+        'lienDeclarant': _controllers['lienDeclarant']!.text,
+        'pieceIdDeclarant': _controllers['pieceIdDeclarant']!.text,
+        'certificatAccouchement': _controllers['certificatAccouchement']!.text,
+        'livretFamille': _controllers['livretFamille']!.text,
+        'acteNaissPere': _controllers['acteNaissPere']!.text,
+        'acteNaissMere': _controllers['acteNaissMere']!.text,
+        'acteReconnaissance': _controllers['acteReconnaissance']!.text,
+        'certificatNationalite': _controllers['certificatNationalite']!.text,
         'synced': 0,
       };
       if (widget.declaration != null) {
@@ -165,35 +205,75 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
         await DatabaseHelper.instance.insertDeclaration(data);
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Déclaration enregistrée avec succès!'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: Color(0xFF4CAF9E),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text('Déclaration enregistrée avec succès!'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: _mainColor,
+      ));
       Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) {
-        _showValidationError('Erreur : ${e.toString()}');
-      }
+      if (mounted) _showValidationError('Erreur : ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   void _showValidationError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.red,
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Colors.red,
+    ));
+  }
+
+  void _populateFields() {
+    final d = widget.declaration!;
+    _controllers['nom']!.text = d['nom'] ?? '';
+    _controllers['prenom']!.text = d['prenom'] ?? '';
+    _dateNaissance = d['dateNaissance'] != null ? DateTime.parse(d['dateNaissance']) : null;
+    _controllers['lieuNaissance']!.text = d['lieuNaissance'] ?? '';
+    _controllers['heureNaissance']!.text = d['heureNaissance'] ?? '';
+    _sexe = d['sexe'];
+    _controllers['nomPere']!.text = d['nomPere'] ?? '';
+    _controllers['prenomPere']!.text = d['prenomPere'] ?? '';
+    _dateNaissancePere = d['dateNaissancePere'] != null ? DateTime.parse(d['dateNaissancePere']) : null;
+    _controllers['lieuNaissancePere']!.text = d['lieuNaissancePere'] ?? '';
+    _controllers['professionPere']!.text = d['professionPere'] ?? '';
+    _controllers['nationalitePere']!.text = d['nationalitePere'] ?? '';
+    _controllers['adressePere']!.text = d['adressePere'] ?? '';
+    _controllers['pieceIdPere']!.text = d['pieceIdPere'] ?? '';
+    _statutPere = d['statutPere'] ?? 'Vivant';
+    _controllers['nomMere']!.text = d['nomMere'] ?? '';
+    _controllers['prenomMere']!.text = d['prenomMere'] ?? '';
+    _controllers['nomJeuneFilleMere']!.text = d['nomJeuneFilleMere'] ?? '';
+    _dateNaissanceMere = d['dateNaissanceMere'] != null ? DateTime.parse(d['dateNaissanceMere']) : null;
+    _controllers['lieuNaissanceMere']!.text = d['lieuNaissanceMere'] ?? '';
+    _controllers['professionMere']!.text = d['professionMere'] ?? '';
+    _controllers['nationaliteMere']!.text = d['nationaliteMere'] ?? '';
+    _controllers['adresseMere']!.text = d['adresseMere'] ?? '';
+    _controllers['pieceIdMere']!.text = d['pieceIdMere'] ?? '';
+    _statutMere = d['statutMere'] ?? 'Vivant';
+    _statutMaritalParents = d['statutMarital'];
+    _parentsMaries = d['parentsMaries'] == 1;
+    _dateMariageParents = d['dateMariageParents'] != null ? DateTime.parse(d['dateMariageParents']) : null;
+    _showMarriageDetails = _parentsMaries;
+    _controllers['lieuMariageParents']!.text = d['lieuMariageParents'] ?? '';
+    _controllers['nomDeclarant']!.text = d['nomDeclarant'] ?? '';
+    _controllers['prenomDeclarant']!.text = d['prenomDeclarant'] ?? '';
+    _controllers['adresseDeclarant']!.text = d['adresseDeclarant'] ?? '';
+    _controllers['lienDeclarant']!.text = d['lienDeclarant'] ?? '';
+    _controllers['pieceIdDeclarant']!.text = d['pieceIdDeclarant'] ?? '';
+    _controllers['certificatAccouchement']!.text = d['certificatAccouchement'] ?? '';
+    _controllers['livretFamille']!.text = d['livretFamille'] ?? '';
+    _controllers['acteNaissPere']!.text = d['acteNaissPere'] ?? '';
+    _controllers['acteNaissMere']!.text = d['acteNaissMere'] ?? '';
+    _controllers['acteReconnaissance']!.text = d['acteReconnaissance'] ?? '';
+    _controllers['certificatNationalite']!.text = d['certificatNationalite'] ?? '';
+    _updateDateControllerText();
   }
 
   Widget _buildTextField({
-    required TextEditingController controller,
+    required String controllerKey,
     required String label,
     String? hint,
     bool isRequired = true,
@@ -203,15 +283,25 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
-        controller: controller,
+        controller: _controllers[controllerKey],
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _borderColor),
           ),
           filled: true,
-          fillColor: Colors.grey[50],
+          fillColor: _backgroundColor,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _borderColor),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _mainColor, width: 2),
+          ),
         ),
         keyboardType: keyboardType,
         validator: isRequired ? (value) => value == null || value.trim().isEmpty ? 'Champ obligatoire' : null : null,
@@ -220,32 +310,38 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
     );
   }
 
-  Widget _buildDateField(BuildContext context, {bool isMarriageDate = false}) {
+  Widget _buildDatePickerTextField({
+    required String controllerKey,
+    required String label,
+    bool isRequired = true,
+    bool isMarriageDate = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: InkWell(
-        onTap: () => _selectDate(context, isMarriageDate: isMarriageDate),
-        child: InputDecorator(
-          decoration: InputDecoration(
-            labelText: isMarriageDate ? 'Date de mariage' : 'Date de naissance',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            filled: true,
-            fillColor: Colors.grey[50],
+      child: TextFormField(
+        controller: _controllers[controllerKey],
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _borderColor),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                isMarriageDate
-                    ? (_dateMariageParents == null ? 'Sélectionner une date' : DateFormat('dd/MM/yyyy').format(_dateMariageParents!))
-                    : (_dateNaissance == null ? 'Sélectionner une date' : DateFormat('dd/MM/yyyy').format(_dateNaissance!)),
-              ),
-              const Icon(Icons.calendar_today),
-            ],
+          filled: true,
+          fillColor: _backgroundColor,
+          suffixIcon: Icon(Icons.calendar_today, color: _mainColor),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _borderColor),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _mainColor, width: 2),
           ),
         ),
+        validator: isRequired ? (value) => value == null || value.isEmpty ? 'Champ obligatoire' : null : null,
+        onTap: () async => await _selectDate(context, controllerKey: controllerKey, isMarriageDate: isMarriageDate),
       ),
     );
   }
@@ -265,13 +361,24 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
           labelText: label,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _borderColor),
           ),
           filled: true,
-          fillColor: Colors.grey[50],
+          fillColor: _backgroundColor,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _borderColor),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _mainColor, width: 2),
+          ),
         ),
         items: items,
         onChanged: onChanged,
         validator: isRequired ? (value) => value == null ? 'Champ obligatoire' : null : null,
+        style: TextStyle(color: _textColor),
       ),
     );
   }
@@ -280,62 +387,53 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Statut marital des parents',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: ChoiceChip(
-                label: const Text('Mariés'),
-                selected: _parentsMaries,
-                onSelected: (selected) {
-                  setState(() {
-                    _parentsMaries = true;
-                    _statutMaritalParents = 'Marié';
-                    _showMarriageDetails = true;
-                  });
-                },
-                selectedColor: const Color(0xFF4CAF9E),
-                labelStyle: TextStyle(
-                  color: _parentsMaries ? Colors.white : Colors.black,
-                ),
-              ),
+        Row(children: [
+          Expanded(
+            child: ChoiceChip(
+              label: const Text('Mariés'),
+              selected: _parentsMaries,
+              onSelected: (_) => setState(() {
+                _parentsMaries = true;
+                _statutMaritalParents = 'Marié';
+                _showMarriageDetails = true;
+              }),
+              selectedColor: _mainColor,
+              labelStyle: TextStyle(color: _parentsMaries ? Colors.white : _textColor),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ChoiceChip(
-                label: const Text('Non mariés'),
-                selected: !_parentsMaries,
-                onSelected: (selected) {
-                  setState(() {
-                    _parentsMaries = false;
-                    _statutMaritalParents = 'Non marié';
-                    _showMarriageDetails = false;
-                  });
-                },
-                selectedColor: Colors.blue,
-                labelStyle: TextStyle(
-                  color: !_parentsMaries ? Colors.white : Colors.black,
-                ),
-              ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: ChoiceChip(
+              label: const Text('Non mariés'),
+              selected: !_parentsMaries,
+              onSelected: (_) => setState(() {
+                _parentsMaries = false;
+                _statutMaritalParents = 'Non marié';
+                _showMarriageDetails = false;
+              }),
+              selectedColor: _mainColor,
+              labelStyle: TextStyle(color: !_parentsMaries ? Colors.white : _textColor),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-          ],
-        ),
+          ),
+        ]),
         AnimatedSize(
           duration: const Duration(milliseconds: 300),
           child: _showMarriageDetails
               ? Column(
                   children: [
                     const SizedBox(height: 16),
-                    _buildDateField(context, isMarriageDate: true),
+                    _buildDatePickerTextField(
+                      controllerKey: 'dateMariageParents',
+                      label: 'Date de mariage',
+                      isMarriageDate: true,
+                    ),
                     _buildTextField(
-                      controller: TextEditingController(text: _lieuMariageParents),
+                      controllerKey: 'lieuMariageParents',
                       label: 'Lieu de mariage',
                       hint: 'Ville où les parents se sont mariés',
-                      onChanged: (value) => _lieuMariageParents = value,
                     ),
                   ],
                 )
@@ -357,39 +455,6 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
     );
   }
 
-  Widget _buildSubmitButton() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: ElevatedButton(
-        onPressed: _isSubmitting ? null : _submit,
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 50),
-          backgroundColor: const Color(0xFF4CAF9E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: _isSubmitting
-            ? const SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Text(
-                'ENREGISTRER',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-      ),
-    );
-  }
-
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -398,21 +463,20 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 18,
+            style: TextStyle(
+              fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF4CAF9E),
+              color: _mainColor,
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 8),
           Container(
-            height: 2,
+            height: 3,
+            width: 60,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [const Color(0xFF4CAF9E).withOpacity(0.3), Colors.transparent],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
+              color: _mainColor,
+              borderRadius: BorderRadius.circular(3),
             ),
           ),
         ],
@@ -420,14 +484,125 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
     );
   }
 
+  Widget _buildChildInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle("Informations de l'enfant"),
+        _buildTextField(controllerKey: 'nom', label: "Nom de l'enfant"),
+        _buildTextField(controllerKey: 'prenom', label: "Prénom de l'enfant"),
+        _buildDatePickerTextField(controllerKey: 'dateNaissance', label: 'Date de naissance'),
+        _buildTextField(
+          controllerKey: 'heureNaissance',
+          label: 'Heure de naissance',
+          hint: 'HH:mm',
+          keyboardType: TextInputType.datetime,
+        ),
+        _buildTextField(controllerKey: 'lieuNaissance', label: "Lieu de naissance"),
+        _buildDropdownField(
+          value: _sexe,
+          label: 'Sexe',
+          items: const [
+            DropdownMenuItem(value: "M", child: Text('Garçon')),
+            DropdownMenuItem(value: "F", child: Text('Fille')),
+          ],
+          onChanged: (value) => setState(() => _sexe = value),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildParentsInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Statut marital des parents'),
+        _buildMaritalStatusField(),
+        if (_parentsMaries) ...[
+          _buildSectionTitle("Informations du père"),
+          _buildTextField(controllerKey: 'nomPere', label: 'Nom du père', isRequired: true),
+          _buildTextField(controllerKey: 'prenomPere', label: 'Prénom du père', isRequired: true),
+          _buildDatePickerTextField(controllerKey: 'dateNaissancePere', label: 'Date de naissance du père', isRequired: false),
+          _buildTextField(controllerKey: 'lieuNaissancePere', label: 'Lieu de naissance du père', isRequired: false),
+          _buildTextField(controllerKey: 'professionPere', label: 'Profession du père', isRequired: false),
+          _buildTextField(controllerKey: 'nationalitePere', label: 'Nationalité du père', isRequired: false),
+          _buildTextField(controllerKey: 'adressePere', label: 'Adresse du père', isRequired: false),
+          _buildTextField(controllerKey: 'pieceIdPere', label: 'Numéro pièce d\'identité du père', isRequired: false),
+          _buildParentStatusField('père', _statutPere, (value) => setState(() => _statutPere = value)),
+        ],
+        _buildSectionTitle("Informations de la mère"),
+        _buildTextField(controllerKey: 'nomMere', label: 'Nom de la mère'),
+        _buildTextField(controllerKey: 'prenomMere', label: 'Prénom de la mère'),
+        _buildDatePickerTextField(controllerKey: 'dateNaissanceMere', label: 'Date de naissance de la mère', isRequired: false),
+        _buildTextField(controllerKey: 'lieuNaissanceMere', label: 'Lieu de naissance de la mère', isRequired: false),
+        _buildTextField(controllerKey: 'professionMere', label: 'Profession de la mère', isRequired: false),
+        _buildTextField(controllerKey: 'nationaliteMere', label: 'Nationalité de la mère', isRequired: false),
+        _buildTextField(controllerKey: 'adresseMere', label: 'Adresse de la mère', isRequired: false),
+        _buildTextField(controllerKey: 'pieceIdMere', label: 'Numéro pièce d\'identité de la mère', isRequired: false),
+        _buildParentStatusField('mère', _statutMere, (value) => setState(() => _statutMere = value)),
+      ],
+    );
+  }
+
+  Widget _buildDeclarantInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Informations du déclarant'),
+        _buildTextField(controllerKey: 'nomDeclarant', label: 'Nom du déclarant'),
+        _buildTextField(controllerKey: 'prenomDeclarant', label: 'Prénom du déclarant'),
+        _buildTextField(controllerKey: 'adresseDeclarant', label: 'Adresse du déclarant'),
+        _buildTextField(controllerKey: 'lienDeclarant', label: 'Lien avec l\'enfant'),
+        _buildTextField(controllerKey: 'pieceIdDeclarant', label: 'Numéro pièce d\'identité du déclarant'),
+      ],
+    );
+  }
+
+  Widget _buildDocuments() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Documents justificatifs'),
+        _buildTextField(controllerKey: 'certificatAccouchement', label: 'Certificat d\'accouchement', isRequired: false),
+        _buildTextField(controllerKey: 'livretFamille', label: 'Livret de famille', isRequired: false),
+        _buildTextField(controllerKey: 'acteNaissPere', label: 'Acte de naissance du père', isRequired: false),
+        _buildTextField(controllerKey: 'acteNaissMere', label: 'Acte de naissance de la mère', isRequired: false),
+        _buildTextField(controllerKey: 'acteReconnaissance', label: 'Acte de reconnaissance', isRequired: false),
+        _buildTextField(controllerKey: 'certificatNationalite', label: 'Certificat de nationalité', isRequired: false),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Déclaration de Naissance'),
+        title: const Text('Déclaration de Naissance',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+            shadows: [
+              Shadow(
+                blurRadius: 2.0,
+                color: Colors.black12,
+                offset: Offset(1.0, 1.0),
+              ),
+            ],
+          ),
+        ),
         centerTitle: true,
+        backgroundColor: _mainColor,
         elevation: 0,
-        backgroundColor: const Color(0xFF4CAF9E),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_mainColor, _mainColor],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
@@ -435,61 +610,33 @@ class _DeclarationFormState extends State<DeclarationForm> with SingleTickerProv
             tooltip: 'Enregistrer',
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Enfant', icon: Icon(Icons.child_care)),
+            Tab(text: 'Parents', icon: Icon(Icons.family_restroom)),
+            Tab(text: 'Déclarant', icon: Icon(Icons.person)),
+            Tab(text: 'Documents', icon: Icon(Icons.attach_file)),
+          ],
+          indicatorColor: Colors.white,
+          labelStyle: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: FadeTransition(
         opacity: _opacityAnimation,
         child: SlideTransition(
           position: _slideAnimation,
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.white, Color(0xFFE8F5E9)],
-              ),
-            ),
-            child: Form(
-              key: _formKey,
-              child: Scrollbar(
-                controller: _scrollController,
-                thumbVisibility: true,
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle('Informations de l\'enfant'),
-                      _buildTextField(controller: _nomController, label: 'Nom de l\'enfant'),
-                      _buildTextField(controller: _prenomController, label: 'Prénom de l\'enfant'),
-                      _buildDateField(context),
-                      _buildTextField(controller: _lieuController, label: 'Lieu de naissance'),
-                      _buildDropdownField(
-                        value: _sexe,
-                        label: 'Sexe',
-                        items: const [
-                          DropdownMenuItem(value: 'M', child: Text('Garçon')),
-                          DropdownMenuItem(value: 'F', child: Text('Fille')),
-                        ],
-                        onChanged: (value) => setState(() => _sexe = value),
-                      ),
-                      _buildSectionTitle('Statut marital des parents'),
-                      _buildMaritalStatusField(),
-                      _buildSectionTitle('Informations du père'),
-                      _buildTextField(controller: _nomPereController, label: 'Nom du père', isRequired: _parentsMaries),
-                      _buildTextField(controller: _prenomPereController, label: 'Prénom du père', isRequired: _parentsMaries),
-                      _buildParentStatusField('père', _statutPere, (value) => setState(() => _statutPere = value)),
-                      _buildSectionTitle('Informations de la mère'),
-                      _buildTextField(controller: _nomMereController, label: 'Nom de la mère'),
-                      _buildTextField(controller: _prenomMereController, label: 'Prénom de la mère'),
-                      _buildParentStatusField('mère', _statutMere, (value) => setState(() => _statutMere = value)),
-                      const SizedBox(height: 24),
-                      _buildSubmitButton(),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-              ),
+          child: Form(
+            key: _formKey,
+            child: TabBarView(
+              controller: _tabController,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                SingleChildScrollView(padding: const EdgeInsets.all(20), child: _buildChildInfo()),
+                SingleChildScrollView(padding: const EdgeInsets.all(20), child: _buildParentsInfo()),
+                SingleChildScrollView(padding: const EdgeInsets.all(20), child: _buildDeclarantInfo()),
+                SingleChildScrollView(padding: const EdgeInsets.all(20), child: _buildDocuments()),
+              ],
             ),
           ),
         ),

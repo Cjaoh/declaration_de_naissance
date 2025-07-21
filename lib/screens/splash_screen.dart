@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'auth_screen.dart'; 
-import '../db/database_helper.dart';
-import '../utils/translate.dart';
 
 class SplashScreen extends StatefulWidget {
   static const String routeName = '/';

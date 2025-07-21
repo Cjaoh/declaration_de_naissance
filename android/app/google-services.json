@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "95444634348",
+    "project_id": "etatcivil-d7daa",
+    "storage_bucket": "etatcivil-d7daa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:95444634348:android:ffb41341a20a91310cf3c9",
+        "android_client_info": {
+          "package_name": "com.example.declaration_naissance"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBrmajP5AwcRnJJNEqh1QaThsPdhb_CYA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

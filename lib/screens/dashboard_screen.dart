@@ -5,8 +5,8 @@ import 'package:badges/badges.dart' as badges;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-
 import 'declaration_list.dart';
+import 'declaration_form.dart';
 import 'sync_screen.dart';
 import 'settings_screen.dart';
 import 'auth_screen.dart';
@@ -14,9 +14,7 @@ import '../db/database_helper.dart';
 
 class DashboardScreen extends StatefulWidget {
   static const String routeName = '/dashboard';
-
   const DashboardScreen({Key? key}) : super(key: key);
-
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
@@ -29,13 +27,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _userLastName;
   String? _userEmail;
   String? _profilePicture;
-
   final List<String> imgList = [
     'assets/images/1.png',
     'assets/images/2.png',
     'assets/images/3.png',
   ];
-
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
@@ -53,14 +49,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         _userFirstName = user?['firstName'] ?? "User";
         _userLastName = user?['lastName'] ?? "Name";
-        _profilePicture = user?['profilePicture'] ?? "assets/images/default_profile.png";
+        _profilePicture = user?['profilePicture'];
       });
     }
   }
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+    if (pickedFile != null && _userEmail != null) {
       setState(() {
         _profilePicture = pickedFile.path;
       });
@@ -83,6 +79,131 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.dispose();
   }
 
+  Widget _buildDrawerHeader(BuildContext context) {
+    ImageProvider? backgroundImage;
+    if (_profilePicture != null && File(_profilePicture!).existsSync()) {
+      backgroundImage = _profilePicture!.startsWith('http')
+          ? NetworkImage(_profilePicture!)
+          : FileImage(File(_profilePicture!));
+    } else {
+      backgroundImage = null; // Pas d’image default asset
+    }
+
+    return DrawerHeader(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFF4CAF9E), const Color(0xFF4CAF9E).withOpacity(0.7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: _pickImage,
+            child: CircleAvatar(
+              radius: 30,
+              backgroundImage: backgroundImage,
+              child: backgroundImage == null
+                  ? Icon(Icons.person, size: 40, color: Colors.white.withOpacity(0.9))
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '$_userFirstName $_userLastName',
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            _userEmail ?? 'agent@example.com',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white.withOpacity(0.9)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      width: MediaQuery.of(context).size.width * 0.7,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
+      ),
+      child: Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            _buildDrawerHeader(context),
+            _buildDrawerItem(
+              context,
+              icon: Icons.dashboard,
+              title: 'Tableau de bord',
+              onTap: () => _navigateWithAnimation(context, DashboardScreen.routeName),
+            ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.child_care,
+              title: 'Déclarations',
+              onTap: () => _navigateWithAnimation(context, '/form'),
+            ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.sync,
+              title: 'Synchronisation',
+              onTap: () => _navigateWithAnimation(context, SyncScreen.routeName),
+            ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.settings,
+              title: 'Paramètres',
+              onTap: () {
+                if (_userEmail != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SettingsScreen(currentUserEmail: _userEmail!),
+                    ),
+                  ).then((_) => _loadUserInfo());
+                }
+              },
+            ),
+            const Divider(),
+            _buildDrawerItem(
+              context,
+              icon: Icons.logout,
+              title: 'Déconnexion',
+              onTap: () => Navigator.pushReplacementNamed(context, AuthScreen.routeName),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: const Color(0xFF4CAF9E)),
+      title: Text(title),
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+      hoverColor: const Color(0xFF4CAF9E).withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -93,9 +214,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: const Color(0xFF4CAF9E),
         actions: [
           IconButton(
-            icon: const badges.Badge(
-              child: Icon(Icons.notifications),
-            ),
+            icon: const badges.Badge(child: Icon(Icons.notifications)),
             onPressed: _showNotifications,
           ),
         ],
@@ -108,10 +227,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               image: DecorationImage(
                 image: const AssetImage('assets/images/5.jpg'),
                 fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.2),
-                  BlendMode.darken,
-                ),
+                colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.2), BlendMode.darken),
               ),
             ),
           ),
@@ -145,23 +261,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: const Color(0xFF4CAF9E).withOpacity(0.9),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, -5))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             '© 2025 - by homme serpent',
-            style: TextStyle(
-              color: theme.colorScheme.onPrimary,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: theme.colorScheme.onPrimary, fontSize: 14),
           ),
         ],
       ),
@@ -175,9 +282,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         controller: _pageController,
         itemCount: imgList.length,
         physics: const BouncingScrollPhysics(),
-        itemBuilder: (context, index) {
-          return _buildCarouselItem(context, index);
-        },
+        itemBuilder: (context, index) => _buildCarouselItem(context, index),
       ),
     );
   }
@@ -197,19 +302,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildFullScreenImage(int index) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, iconTheme: const IconThemeData(color: Colors.white)),
       body: Center(
         child: Hero(
           tag: 'carousel-$index',
-          child: Image.asset(
-            imgList[index],
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => _buildImageError(),
-          ),
+          child: Image.asset(imgList[index], fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) => _buildImageError()),
         ),
       ),
     );
@@ -226,10 +323,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
         return Transform.scale(
           scale: value,
-          child: Transform.translate(
-            offset: Offset(0, 10 * (1 - value)),
-            child: child,
-          ),
+          child: Transform.translate(offset: Offset(0, 10 * (1 - value)), child: child),
         );
       },
       child: MouseRegion(
@@ -262,8 +356,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       opacity: 0.8,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(imgList.length, (index) {
-          return AnimatedContainer(
+        children: List.generate(
+          imgList.length,
+          (index) => AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.fastOutSlowIn,
             margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -274,15 +369,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               borderRadius: BorderRadius.circular(4),
               boxShadow: [
                 if (_currentPage == index)
-                  BoxShadow(
-                    color: const Color(0xFF4CAF9E).withOpacity(0.5),
-                    blurRadius: 4,
-                    spreadRadius: 1,
-                  ),
+                  BoxShadow(color: const Color(0xFF4CAF9E).withOpacity(0.5), blurRadius: 4, spreadRadius: 1),
               ],
             ),
-          );
-        }),
+          ),
+        ),
       ),
     );
   }
@@ -323,7 +414,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         },
       ),
     ];
-
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: AnimationLimiter(
@@ -345,9 +435,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: ScaleAnimation(
                 curve: Curves.fastOutSlowIn,
                 duration: const Duration(milliseconds: 900),
-                child: FadeInAnimation(
-                  child: items[index],
-                ),
+                child: FadeInAnimation(child: items[index]),
               ),
             );
           },
@@ -365,9 +453,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _showNotifications() {
-    // Implement notification logic here
-  }
+  void _showNotifications() {}
 
   void _navigateWithAnimation(BuildContext context, String routeName) {
     final route = _getRouteFromName(routeName);
@@ -383,7 +469,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case SyncScreen.routeName:
         return const SyncScreen();
       case '/form':
-        return null;
+        return const DeclarationForm();
       default:
         return null;
     }
@@ -401,149 +487,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         return SlideTransition(
           position: animation.drive(tween),
-          child: FadeTransition(
-            opacity: animation,
-            child: child,
-          ),
+          child: FadeTransition(opacity: animation, child: child),
         );
       },
-    );
-  }
-
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      width: MediaQuery.of(context).size.width * 0.7,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
-      ),
-      child: Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            _buildDrawerHeader(context),
-            ..._buildDrawerItems(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerHeader(BuildContext context) {
-    return DrawerHeader(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF4CAF9E),
-            const Color(0xFF4CAF9E).withOpacity(0.7),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: _pickImage,
-            child: CircleAvatar(
-              radius: 30,
-              backgroundImage: _profilePicture != null
-                  ? (_profilePicture!.startsWith('http')
-                      ? NetworkImage(_profilePicture!)
-                      : FileImage(File(_profilePicture!)))
-                  : const AssetImage('assets/images/default_profile.png') as ImageProvider,
-              child: _profilePicture == null
-                  ? Icon(
-                      Icons.person,
-                      size: 40,
-                      color: Colors.white.withOpacity(0.9),
-                    )
-                  : null,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '$_userFirstName $_userLastName',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          Text(
-            _userEmail ?? 'agent@example.com',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white.withOpacity(0.9),
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildDrawerItems(BuildContext context) {
-    return [
-      _buildDrawerItem(
-        context,
-        icon: Icons.dashboard,
-        title: 'Tableau de bord',
-        onTap: () => _navigateWithAnimation(context, DashboardScreen.routeName),
-      ),
-      _buildDrawerItem(
-        context,
-        icon: Icons.child_care,
-        title: 'Déclarations',
-        onTap: () => _navigateWithAnimation(context, DeclarationList.routeName),
-      ),
-      _buildDrawerItem(
-        context,
-        icon: Icons.sync,
-        title: 'Synchronisation',
-        onTap: () => _navigateWithAnimation(context, SyncScreen.routeName),
-      ),
-      _buildDrawerItem(
-        context,
-        icon: Icons.settings,
-        title: 'Paramètres',
-        onTap: () {
-          if (_userEmail != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => SettingsScreen(currentUserEmail: _userEmail!),
-              ),
-            ).then((_) => _loadUserInfo());
-          }
-        },
-      ),
-      const Divider(),
-      _buildDrawerItem(
-        context,
-        icon: Icons.logout,
-        title: 'Déconnexion',
-        onTap: () => Navigator.pushReplacementNamed(context, AuthScreen.routeName),
-      ),
-    ];
-  }
-
-  Widget _buildDrawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: const Color(0xFF4CAF9E)),
-      title: Text(title),
-      onTap: () {
-        Navigator.pop(context);
-        onTap();
-      },
-      hoverColor: const Color(0xFF4CAF9E).withOpacity(0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
     );
   }
 }
@@ -553,7 +499,6 @@ class _DashboardItem extends StatelessWidget {
   final String title;
   final Color color;
   final VoidCallback onTap;
-
   const _DashboardItem({
     Key? key,
     required this.icon,
@@ -561,7 +506,6 @@ class _DashboardItem extends StatelessWidget {
     required this.color,
     required this.onTap,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -580,10 +524,7 @@ class _DashboardItem extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.1),
-                color.withOpacity(0.05),
-              ],
+              colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
             ),
           ),
           child: Center(
@@ -597,11 +538,7 @@ class _DashboardItem extends StatelessWidget {
                   Text(
                     title,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ],
               ),

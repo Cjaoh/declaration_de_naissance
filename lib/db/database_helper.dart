@@ -18,7 +18,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -31,18 +31,43 @@ class DatabaseHelper {
         nom TEXT NOT NULL,
         prenom TEXT,
         dateNaissance TEXT,
-        lieu TEXT,
+        lieuNaissance TEXT,
+        heureNaissance TEXT,
         sexe TEXT,
         nomPere TEXT,
         prenomPere TEXT,
+        dateNaissancePere TEXT,
+        lieuNaissancePere TEXT,
+        professionPere TEXT,
+        nationalitePere TEXT,
+        adressePere TEXT,
+        pieceIdPere TEXT,
         statutPere TEXT,
         nomMere TEXT,
         prenomMere TEXT,
+        nomJeuneFilleMere TEXT,
+        dateNaissanceMere TEXT,
+        lieuNaissanceMere TEXT,
+        professionMere TEXT,
+        nationaliteMere TEXT,
+        adresseMere TEXT,
+        pieceIdMere TEXT,
         statutMere TEXT,
         statutMarital TEXT,
         parentsMaries INTEGER,
         dateMariageParents TEXT,
         lieuMariageParents TEXT,
+        nomDeclarant TEXT,
+        prenomDeclarant TEXT,
+        adresseDeclarant TEXT,
+        lienDeclarant TEXT,
+        pieceIdDeclarant TEXT,
+        certificatAccouchement TEXT,
+        livretFamille TEXT,
+        acteNaissPere TEXT,
+        acteNaissMere TEXT,
+        acteReconnaissance TEXT,
+        certificatNationalite TEXT,
         synced INTEGER DEFAULT 0
       )
     ''');
@@ -60,31 +85,33 @@ class DatabaseHelper {
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 3) {
-      await _addColumnIfNotExists(db, 'declarations', 'statutPere', 'TEXT');
-      await _addColumnIfNotExists(db, 'declarations', 'statutMere', 'TEXT');
-      await _addColumnIfNotExists(db, 'declarations', 'statutMarital', 'TEXT');
-      await _addColumnIfNotExists(db, 'declarations', 'parentsMaries', 'INTEGER');
-      await _addColumnIfNotExists(db, 'declarations', 'dateMariageParents', 'TEXT');
-      await _addColumnIfNotExists(db, 'declarations', 'lieuMariageParents', 'TEXT');
-      await _addColumnIfNotExists(db, 'declarations', 'nomPere', 'TEXT');
-      await _addColumnIfNotExists(db, 'declarations', 'prenomPere', 'TEXT');
-      await _addColumnIfNotExists(db, 'declarations', 'nomMere', 'TEXT');
-      await _addColumnIfNotExists(db, 'declarations', 'prenomMere', 'TEXT');
-      await _addColumnIfNotExists(db, 'users', 'firstName', 'TEXT');
-      await _addColumnIfNotExists(db, 'users', 'lastName', 'TEXT');
-    }
-  }
-
-  Future<void> _addColumnIfNotExists(Database db, String table, String column, String type) async {
-    final result = await db.rawQuery("PRAGMA table_info($table)");
-    final columnExists = result.any((row) => row['name'] == column);
-    if (!columnExists) {
-      try {
-        await db.execute("ALTER TABLE $table ADD COLUMN $column $type");
-      } catch (e) {
-        print("Error adding column $column to $table: $e");
-      }
+    if (oldVersion < 4) {
+      await db.execute('ALTER TABLE declarations ADD COLUMN heureNaissance TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN lieuNaissance TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN dateNaissancePere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN lieuNaissancePere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN professionPere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN nationalitePere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN adressePere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN pieceIdPere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN dateNaissanceMere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN lieuNaissanceMere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN professionMere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN nationaliteMere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN adresseMere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN pieceIdMere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN nomJeuneFilleMere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN nomDeclarant TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN prenomDeclarant TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN adresseDeclarant TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN lienDeclarant TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN pieceIdDeclarant TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN certificatAccouchement TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN livretFamille TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN acteNaissPere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN acteNaissMere TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN acteReconnaissance TEXT');
+      await db.execute('ALTER TABLE declarations ADD COLUMN certificatNationalite TEXT');
     }
   }
 

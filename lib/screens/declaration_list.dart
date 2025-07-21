@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
 import 'declaration_form.dart';
-import '../utils/translate.dart';
 
 class DeclarationList extends StatefulWidget {
   static const String routeName = '/list';
+
   const DeclarationList({Key? key}) : super(key: key);
 
   @override
@@ -78,15 +78,15 @@ class _DeclarationListState extends State<DeclarationList> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Supprimer',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
-
     if (confirm == true) {
       await DatabaseHelper.instance.deleteDeclaration(id);
       if (mounted) {
@@ -106,15 +106,12 @@ class _DeclarationListState extends State<DeclarationList> {
     int garcons = _filteredDeclarations.where((d) => d['sexe'] == 'M').length;
     int filles = _filteredDeclarations.where((d) => d['sexe'] == 'F').length;
     int maries = _filteredDeclarations.where((d) => d['parentsMaries'] == 1).length;
-
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Row(
@@ -143,29 +140,19 @@ class _DeclarationListState extends State<DeclarationList> {
         const SizedBox(height: 4),
         Text(
           count.toString(),
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
         ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12),
-        ),
+        Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
   }
 
   Widget _buildDeclarationItem(Map<String, dynamic> decl, int index) {
     final isMarried = decl['parentsMaries'] == 1;
-
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => _editDeclaration(decl),
@@ -180,10 +167,7 @@ class _DeclarationListState extends State<DeclarationList> {
                   Expanded(
                     child: Text(
                       '${decl['nom']} ${decl['prenom']}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -195,16 +179,18 @@ class _DeclarationListState extends State<DeclarationList> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Né(e) le : ${DateFormat('dd/MM/yyyy').format(DateTime.parse(decl['dateNaissance']))}',
+                'Né(e) le : ${DateFormat('dd/MM/yyyy').format(DateTime.parse(decl['dateNaissance']))} à ${decl['heureNaissance'] ?? 'HH:mm'}',
                 style: const TextStyle(color: Colors.grey),
               ),
-              Text(
-                'Lieu : ${decl['lieu'] ?? 'Non spécifié'}',
-                style: const TextStyle(color: Colors.grey),
-              ),
+              Text('Lieu : ${decl['lieuNaissance'] ?? 'Non spécifié'}', style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 12),
               _buildParentInfo('Père', decl['nomPere'], decl['prenomPere'], decl['statutPere']),
               _buildParentInfo('Mère', decl['nomMere'], decl['prenomMere'], decl['statutMere']),
+              if (decl['nomJeuneFilleMere'] != null && decl['nomJeuneFilleMere'].toString().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text('Nom de jeune fille de la mère : ${decl['nomJeuneFilleMere']}', style: const TextStyle(color: Colors.grey)),
+                ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -214,37 +200,38 @@ class _DeclarationListState extends State<DeclarationList> {
                     size: 16,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    isMarried ? 'Parents mariés' : 'Parents non mariés',
-                    style: TextStyle(
-                      color: isMarried ? const Color(0xFF4CAF9E) : Colors.grey,
-                      fontSize: 14,
+                  Expanded(
+                    child: Text(
+                      isMarried ? 'Parents mariés' : 'Parents non mariés',
+                      style: TextStyle(color: isMarried ? const Color(0xFF4CAF9E) : Colors.grey, fontSize: 14),
                     ),
                   ),
                   if (isMarried && decl['dateMariageParents'] != null) ...[
                     const SizedBox(width: 8),
-                    Text(
-                      'le ${DateFormat('dd/MM/yyyy').format(DateTime.parse(decl['dateMariageParents']))}',
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
+                    Expanded(
+                      child: Text(
+                        'le ${DateFormat('dd/MM/yyyy').format(DateTime.parse(decl['dateMariageParents']))}',
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                     ),
-                  ]
+                  ],
+                  if (isMarried && decl['lieuMariageParents'] != null && decl['lieuMariageParents'].toString().isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'à ${decl['lieuMariageParents']}',
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
+                      ),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.orange),
-                    onPressed: () => _editDeclaration(decl),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteDeclaration(decl['id']),
-                  ),
+                  IconButton(icon: const Icon(Icons.edit, color: Colors.orange), onPressed: () => _editDeclaration(decl)),
+                  IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _deleteDeclaration(decl['id'])),
                 ],
               ),
             ],
@@ -257,21 +244,14 @@ class _DeclarationListState extends State<DeclarationList> {
   Widget _buildParentInfo(String role, String? nom, String? prenom, String? statut) {
     IconData icon = statut == 'Vivant' ? Icons.check_circle : Icons.highlight_off;
     Color iconColor = statut == 'Vivant' ? Colors.green : Colors.red;
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Text(
-            '$role : ',
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
+          Text('$role : ', style: const TextStyle(fontWeight: FontWeight.w500)),
           Icon(icon, color: iconColor, size: 16),
           const SizedBox(width: 4),
-          Text(
-            '${nom ?? 'Non spécifié'} ${prenom ?? ''}',
-            style: const TextStyle(color: Colors.grey),
-          ),
+          Expanded(child: Text('${nom ?? 'Non spécifié'} ${prenom ?? ''}', style: const TextStyle(color: Colors.grey), overflow: TextOverflow.ellipsis)),
         ],
       ),
     );
@@ -297,10 +277,7 @@ class _DeclarationListState extends State<DeclarationList> {
                     decoration: InputDecoration(
                       hintText: 'Rechercher...',
                       prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                       filled: true,
                       fillColor: Colors.grey[200],
                       contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
@@ -318,9 +295,7 @@ class _DeclarationListState extends State<DeclarationList> {
                                 const Icon(Icons.info_outline, size: 48, color: Colors.grey),
                                 const SizedBox(height: 16),
                                 Text(
-                                  _searchController.text.isEmpty
-                                      ? 'Aucune déclaration enregistrée'
-                                      : 'Aucun résultat trouvé',
+                                  _searchController.text.isEmpty ? 'Aucune déclaration enregistrée' : 'Aucun résultat trouvé',
                                   style: const TextStyle(fontSize: 18, color: Colors.grey),
                                 ),
                               ],
@@ -330,10 +305,7 @@ class _DeclarationListState extends State<DeclarationList> {
                             itemCount: _filteredDeclarations.length + 1,
                             itemBuilder: (context, index) {
                               if (index == 0) return _buildStatsCard();
-                              return _buildDeclarationItem(
-                                _filteredDeclarations[index - 1],
-                                index - 1,
-                              );
+                              return _buildDeclarationItem(_filteredDeclarations[index - 1], index - 1);
                             },
                           ),
                   ),
@@ -342,13 +314,10 @@ class _DeclarationListState extends State<DeclarationList> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const DeclarationForm(),
-            ),
-          );
-          _loadDeclarations();
+          final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const DeclarationForm()));
+          if (result == true) {
+            _loadDeclarations();
+          }
         },
         backgroundColor: const Color(0xFF4CAF9E),
         child: const Icon(Icons.add, color: Colors.white),

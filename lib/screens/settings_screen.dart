@@ -116,8 +116,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                             title: 'Compte',
                             children: [
                               _buildAnimatedSettingItem(index: 2, child: _buildChangePasswordTile(context)),
-                              _buildAnimatedSettingItem(index: 3, child: _buildLogoutTile(context)),
                               _buildAnimatedSettingItem(index: 4, child: _buildEditProfileTile(context)),
+                              _buildAnimatedSettingItem(index: 3, child: _buildLogoutTile(context)),
                             ],
                           ),
                           const SizedBox(height: 40),
@@ -125,7 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                             index: 5,
                             child: const Center(
                               child: Text(
-                                'Version 1.0.0',
+                                '',
                                 style: TextStyle(color: Colors.white70, fontStyle: FontStyle.italic),
                               ),
                             ),

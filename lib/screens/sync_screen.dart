@@ -1,4 +1,3 @@
-import '../db/database_helper.dart';
 import '../utils/translate.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';

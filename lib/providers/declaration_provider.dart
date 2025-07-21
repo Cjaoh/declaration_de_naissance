@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/naissance.dart';
 import '../services/database_service.dart';
-import '../db/database_helper.dart';
+
 
 class DeclarationProvider with ChangeNotifier {
   List<Naissance> _naissances = [];
