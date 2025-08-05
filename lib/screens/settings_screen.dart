@@ -8,10 +8,10 @@ class SettingsScreen extends StatefulWidget {
   static const String routeName = '/settings';
   final String currentUserEmail;
 
-  const SettingsScreen({Key? key, required this.currentUserEmail}) : super(key: key);
+  const SettingsScreen({super.key, required this.currentUserEmail});
 
   @override
-  _SettingsScreenState createState() => _SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
@@ -57,7 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     final provider = Provider.of<ThemeAndLocaleProvider>(context);
     final gradientColors = [
       mainColor,
-      mainColor.withOpacity(0.85),
+      mainColor.withValues(alpha: 0.85),
     ];
 
     return AnimatedBuilder(
@@ -152,7 +152,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             Icons.settings,
             key: ValueKey<int>(_controller.value.round()),
             size: 70,
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
           ),
         ),
         const SizedBox(height: 10),
@@ -160,7 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           'Configuration',
           style: TextStyle(
             fontSize: 24,
-            color: Colors.white.withOpacity(0.95),
+            color: Colors.white.withValues(alpha: 0.95),
             fontWeight: FontWeight.w300,
             letterSpacing: 1.2,
           ),
@@ -173,7 +173,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     return Card(
       elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      color: Colors.white.withOpacity(0.15),
+      color: Colors.white.withValues(alpha: 0.15),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -228,7 +228,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       margin: const EdgeInsets.only(top: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
       ),
       child: ListTile(
         title: const Text('Langue', style: TextStyle(color: Colors.white)),
@@ -254,12 +254,12 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
       ),
       child: SwitchListTile(
         title: Text(title, style: const TextStyle(color: Colors.white)),
         activeColor: mainColor,
-        activeTrackColor: mainColor.withOpacity(0.4),
+        activeTrackColor: mainColor.withValues(alpha: 0.4),
         value: value,
         onChanged: onChanged,
       ),
@@ -288,7 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     return _buildInteractiveTile(
       icon: Icons.person,
       title: 'Modifier le profil',
-      color: mainColor.withOpacity(0.8),
+      color: mainColor.withValues(alpha: 0.8),
       onTap: () => _navigateToEditProfile(context),
     );
   }
@@ -301,8 +301,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
         context,
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 600),
-          pageBuilder: (_, __, ___) => EditProfileScreen(user: user),
-          transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          pageBuilder: (context, animation, secondaryAnimation) => EditProfileScreen(user: user),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
             opacity: animation,
             child: SlideTransition(
               position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(animation),
@@ -335,7 +335,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       margin: const EdgeInsets.only(top: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
       ),
       child: ListTile(
         leading: Icon(icon, color: color),
@@ -346,7 +346,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             fontWeight: title == 'Déconnexion' ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-        trailing: Icon(Icons.arrow_forward_ios, color: color.withOpacity(0.7), size: 16),
+        trailing: Icon(Icons.arrow_forward_ios, color: color.withValues(alpha: 0.7), size: 16),
         onTap: onTap,
       ),
     );

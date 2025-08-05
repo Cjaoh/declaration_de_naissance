@@ -10,15 +10,12 @@ dependencies:
   flutter:
     sdk: flutter
 
-
   flutter_localizations:
     sdk: flutter
 
   flutter_secure_storage: ^9.2.4
 
-
   connectivity_plus: ^6.1.4
-
 
   intl: ^0.20.2
 
@@ -26,12 +23,9 @@ dependencies:
   sqflite_common_ffi: ^2.3.0
   path: ^1.8.0
 
- 
   crypto: ^3.0.1
 
- 
   provider: ^6.1.2
-
 
   animations: ^2.0.11
   font_awesome_flutter: ^10.7.0
@@ -41,14 +35,19 @@ dependencies:
   shimmer: ^3.0.0
   carousel_slider: ^5.1.1
 
-
   image_picker: ^1.0.4
 
- 
   firebase_core: ^2.30.0
-  firebase_auth: ^4.17.0      
-  cloud_firestore: ^4.17.0     
-  firebase_storage: ^11.6.0    
+  firebase_auth: ^4.17.0
+  cloud_firestore: ^4.17.0
+  firebase_storage: ^11.6.0
+  firebase_app_check: ^0.2.2+7
+
+  google_sign_in: ^6.1.0
+
+  local_auth: ^2.1.5
+
+  face_camera: ^0.1.4
 
 dev_dependencies:
   flutter_test:

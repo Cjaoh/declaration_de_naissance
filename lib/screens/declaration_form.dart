@@ -5,7 +5,9 @@ import '../db/database_helper.dart';
 class DeclarationForm extends StatefulWidget {
   static const String routeName = '/form';
   final Map<String, dynamic>? declaration;
-  const DeclarationForm({Key? key, this.declaration}) : super(key: key);
+
+  const DeclarationForm({super.key, this.declaration});
+
   @override
   State<DeclarationForm> createState() => _DeclarationFormState();
 }
@@ -30,7 +32,7 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
   late TabController _tabController;
 
   final Color _mainColor = const Color(0xFF4CAF9E);
-  final Color _accentColor = const Color(0xFFFF9800);
+  // final Color _accentColor = const Color(0xFFFF9800); // Unused field
   final Color _backgroundColor = Colors.white;
   final Color _textColor = Colors.grey[800]!;
   final Color _borderColor = Colors.grey[200]!;
@@ -91,7 +93,9 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
   @override
   void dispose() {
     _animationController.dispose();
-    for (var controller in _controllers.values) controller.dispose();
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
     _tabController.dispose();
     super.dispose();
   }
@@ -109,9 +113,15 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
           _dateMariageParents = picked;
         } else {
           switch (controllerKey) {
-            case 'dateNaissance': _dateNaissance = picked; break;
-            case 'dateNaissancePere': _dateNaissancePere = picked; break;
-            case 'dateNaissanceMere': _dateNaissanceMere = picked; break;
+            case 'dateNaissance':
+              _dateNaissance = picked;
+              break;
+            case 'dateNaissancePere':
+              _dateNaissancePere = picked;
+              break;
+            case 'dateNaissanceMere':
+              _dateNaissanceMere = picked;
+              break;
           }
         }
         _updateDateControllerText();
@@ -127,11 +137,13 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
     if (_dateNaissance == null) {
       _showValidationError('Veuillez sélectionner la date de naissance de l\'enfant');
       _tabController.animateTo(0);
       return;
     }
+
     if (_parentsMaries) {
       if (_dateMariageParents == null) {
         _showValidationError('Veuillez sélectionner la date de mariage des parents');
@@ -149,56 +161,78 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
         return;
       }
     }
+
     if (_controllers['nomMere']!.text.isEmpty || _controllers['prenomMere']!.text.isEmpty) {
       _showValidationError('Veuillez compléter les informations de la mère');
       _tabController.animateTo(1);
       return;
     }
+
+    if (!_validatePieceId(_controllers['pieceIdPere']!.text)) {
+      _showValidationError('Numéro pièce d\'identité du père invalide (doit être alphanumérique et faire entre 9 et 12 caractères)');
+      _tabController.animateTo(1);
+      return;
+    }
+
+    if (!_validatePieceId(_controllers['pieceIdMere']!.text)) {
+      _showValidationError('Numéro pièce d\'identité de la mère invalide (doit être alphanumérique et faire entre 9 et 12 caractères)');
+      _tabController.animateTo(1);
+      return;
+    }
+
+    if (!_validatePieceId(_controllers['pieceIdDeclarant']!.text)) {
+      _showValidationError('Numéro pièce d\'identité du déclarant invalide (doit être alphanumérique et faire entre 9 et 12 caractères)');
+      _tabController.animateTo(2);
+      return;
+    }
+
     setState(() => _isSubmitting = true);
+
+    final data = {
+      'nom': _controllers['nom']!.text,
+      'prenom': _controllers['prenom']!.text,
+      'dateNaissance': _dateNaissance!.toIso8601String(),
+      'heureNaissance': _controllers['heureNaissance']!.text,
+      'lieuNaissance': _controllers['lieuNaissance']!.text,
+      'sexe': _sexe,
+      'nomPere': _controllers['nomPere']!.text,
+      'prenomPere': _controllers['prenomPere']!.text,
+      'dateNaissancePere': _dateNaissancePere?.toIso8601String(),
+      'lieuNaissancePere': _controllers['lieuNaissancePere']!.text,
+      'professionPere': _controllers['professionPere']!.text,
+      'nationalitePere': _controllers['nationalitePere']!.text,
+      'adressePere': _controllers['adressePere']!.text,
+      'pieceIdPere': _controllers['pieceIdPere']!.text,
+      'statutPere': _statutPere,
+      'nomMere': _controllers['nomMere']!.text,
+      'prenomMere': _controllers['prenomMere']!.text,
+      'nomJeuneFilleMere': _controllers['nomJeuneFilleMere']!.text,
+      'dateNaissanceMere': _dateNaissanceMere?.toIso8601String(),
+      'lieuNaissanceMere': _controllers['lieuNaissanceMere']!.text,
+      'professionMere': _controllers['professionMere']!.text,
+      'nationaliteMere': _controllers['nationaliteMere']!.text,
+      'adresseMere': _controllers['adresseMere']!.text,
+      'pieceIdMere': _controllers['pieceIdMere']!.text,
+      'statutMere': _statutMere,
+      'statutMarital': _statutMaritalParents,
+      'parentsMaries': _parentsMaries ? 1 : 0,
+      'dateMariageParents': _dateMariageParents?.toIso8601String(),
+      'lieuMariageParents': _controllers['lieuMariageParents']!.text,
+      'nomDeclarant': _controllers['nomDeclarant']!.text,
+      'prenomDeclarant': _controllers['prenomDeclarant']!.text,
+      'adresseDeclarant': _controllers['adresseDeclarant']!.text,
+      'lienDeclarant': _controllers['lienDeclarant']!.text,
+      'pieceIdDeclarant': _controllers['pieceIdDeclarant']!.text,
+      'certificatAccouchement': _controllers['certificatAccouchement']!.text,
+      'livretFamille': _controllers['livretFamille']!.text,
+      'acteNaissPere': _controllers['acteNaissPere']!.text,
+      'acteNaissMere': _controllers['acteNaissMere']!.text,
+      'acteReconnaissance': _controllers['acteReconnaissance']!.text,
+      'certificatNationalite': _controllers['certificatNationalite']!.text,
+      'synced': 0,
+    };
+
     try {
-      final data = {
-        'nom': _controllers['nom']!.text,
-        'prenom': _controllers['prenom']!.text,
-        'dateNaissance': _dateNaissance!.toIso8601String(),
-        'heureNaissance': _controllers['heureNaissance']!.text,
-        'lieuNaissance': _controllers['lieuNaissance']!.text,
-        'sexe': _sexe,
-        'nomPere': _controllers['nomPere']!.text,
-        'prenomPere': _controllers['prenomPere']!.text,
-        'dateNaissancePere': _dateNaissancePere?.toIso8601String(),
-        'lieuNaissancePere': _controllers['lieuNaissancePere']!.text,
-        'professionPere': _controllers['professionPere']!.text,
-        'nationalitePere': _controllers['nationalitePere']!.text,
-        'adressePere': _controllers['adressePere']!.text,
-        'pieceIdPere': _controllers['pieceIdPere']!.text,
-        'statutPere': _statutPere,
-        'nomMere': _controllers['nomMere']!.text,
-        'prenomMere': _controllers['prenomMere']!.text,
-        'nomJeuneFilleMere': _controllers['nomJeuneFilleMere']!.text,
-        'dateNaissanceMere': _dateNaissanceMere?.toIso8601String(),
-        'lieuNaissanceMere': _controllers['lieuNaissanceMere']!.text,
-        'professionMere': _controllers['professionMere']!.text,
-        'nationaliteMere': _controllers['nationaliteMere']!.text,
-        'adresseMere': _controllers['adresseMere']!.text,
-        'pieceIdMere': _controllers['pieceIdMere']!.text,
-        'statutMere': _statutMere,
-        'statutMarital': _statutMaritalParents,
-        'parentsMaries': _parentsMaries ? 1 : 0,
-        'dateMariageParents': _dateMariageParents?.toIso8601String(),
-        'lieuMariageParents': _controllers['lieuMariageParents']!.text,
-        'nomDeclarant': _controllers['nomDeclarant']!.text,
-        'prenomDeclarant': _controllers['prenomDeclarant']!.text,
-        'adresseDeclarant': _controllers['adresseDeclarant']!.text,
-        'lienDeclarant': _controllers['lienDeclarant']!.text,
-        'pieceIdDeclarant': _controllers['pieceIdDeclarant']!.text,
-        'certificatAccouchement': _controllers['certificatAccouchement']!.text,
-        'livretFamille': _controllers['livretFamille']!.text,
-        'acteNaissPere': _controllers['acteNaissPere']!.text,
-        'acteNaissMere': _controllers['acteNaissMere']!.text,
-        'acteReconnaissance': _controllers['acteReconnaissance']!.text,
-        'certificatNationalite': _controllers['certificatNationalite']!.text,
-        'synced': 0,
-      };
       if (widget.declaration != null) {
         await DatabaseHelper.instance.updateDeclaration(widget.declaration!['id'], data);
       } else {
@@ -212,7 +246,9 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
       ));
       Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) _showValidationError('Erreur : ${e.toString()}');
+      if (mounted) {
+        _showValidationError('Erreur : ${e.toString()}');
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -224,6 +260,12 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
       behavior: SnackBarBehavior.floating,
       backgroundColor: Colors.red,
     ));
+  }
+
+  bool _validatePieceId(String value) {
+    if (value.trim().isEmpty) return true; // Optional field, skip if empty
+    final regExp = RegExp(r'^[a-zA-Z0-9]{9,12}$');
+    return regExp.hasMatch(value.trim());
   }
 
   void _populateFields() {
@@ -304,7 +346,12 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
           ),
         ),
         keyboardType: keyboardType,
-        validator: isRequired ? (value) => value == null || value.trim().isEmpty ? 'Champ obligatoire' : null : null,
+        validator: isRequired
+            ? (value) {
+                if (value == null || value.trim().isEmpty) return 'Champ obligatoire';
+                return null;
+              }
+            : null,
         onChanged: onChanged,
       ),
     );
@@ -388,37 +435,39 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-        Row(children: [
-          Expanded(
-            child: ChoiceChip(
-              label: const Text('Mariés'),
-              selected: _parentsMaries,
-              onSelected: (_) => setState(() {
-                _parentsMaries = true;
-                _statutMaritalParents = 'Marié';
-                _showMarriageDetails = true;
-              }),
-              selectedColor: _mainColor,
-              labelStyle: TextStyle(color: _parentsMaries ? Colors.white : _textColor),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        Row(
+          children: [
+            Expanded(
+              child: ChoiceChip(
+                label: const Text('Mariés'),
+                selected: _parentsMaries,
+                onSelected: (_) => setState(() {
+                  _parentsMaries = true;
+                  _statutMaritalParents = 'Marié';
+                  _showMarriageDetails = true;
+                }),
+                selectedColor: _mainColor,
+                labelStyle: TextStyle(color: _parentsMaries ? Colors.white : _textColor),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: ChoiceChip(
-              label: const Text('Non mariés'),
-              selected: !_parentsMaries,
-              onSelected: (_) => setState(() {
-                _parentsMaries = false;
-                _statutMaritalParents = 'Non marié';
-                _showMarriageDetails = false;
-              }),
-              selectedColor: _mainColor,
-              labelStyle: TextStyle(color: !_parentsMaries ? Colors.white : _textColor),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ChoiceChip(
+                label: const Text('Non mariés'),
+                selected: !_parentsMaries,
+                onSelected: (_) => setState(() {
+                  _parentsMaries = false;
+                  _statutMaritalParents = 'Non marié';
+                  _showMarriageDetails = false;
+                }),
+                selectedColor: _mainColor,
+                labelStyle: TextStyle(color: !_parentsMaries ? Colors.white : _textColor),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
-          ),
-        ]),
+          ],
+        ),
         AnimatedSize(
           duration: const Duration(milliseconds: 300),
           child: _showMarriageDetails
@@ -577,7 +626,8 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Déclaration de Naissance',
+        title: const Text(
+          'Déclaration de Naissance',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -606,7 +656,7 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: _submit,
+            onPressed: _isSubmitting ? null : _submit,
             tooltip: 'Enregistrer',
           ),
         ],
@@ -619,7 +669,7 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
             Tab(text: 'Documents', icon: Icon(Icons.attach_file)),
           ],
           indicatorColor: Colors.white,
-          labelStyle: TextStyle(fontWeight: FontWeight.bold),
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: FadeTransition(

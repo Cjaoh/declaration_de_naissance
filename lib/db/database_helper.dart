@@ -1,5 +1,8 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:developer' as developer;
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -18,7 +21,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 4,
+      version: 7,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -79,7 +82,10 @@ class DatabaseHelper {
         password TEXT NOT NULL,
         firstName TEXT,
         lastName TEXT,
-        profilePicture TEXT
+        profilePicture TEXT,
+        faceImagePath TEXT,
+        biometricId TEXT,
+        otpCode TEXT
       )
     ''');
   }
@@ -113,21 +119,74 @@ class DatabaseHelper {
       await db.execute('ALTER TABLE declarations ADD COLUMN acteReconnaissance TEXT');
       await db.execute('ALTER TABLE declarations ADD COLUMN certificatNationalite TEXT');
     }
+
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE users ADD COLUMN biometricId TEXT');
+    }
+
+    if (oldVersion < 6) {
+      await db.execute('ALTER TABLE users ADD COLUMN faceImagePath TEXT');
+    }
+
+    if (oldVersion < 7) {
+      await db.execute('ALTER TABLE users ADD COLUMN otpCode TEXT');
+    }
+  }
+
+  Future<bool> get isOnline async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    return connectivityResult != ConnectivityResult.none;
   }
 
   Future<int> insertDeclaration(Map<String, dynamic> data) async {
     final db = await instance.database;
-    return await db.insert('declarations', data);
+    int id = await db.insert('declarations', {...data, 'synced': 0});
+    await _trySyncDeclaration(id);
+    return id;
   }
 
   Future<int> updateDeclaration(int id, Map<String, dynamic> data) async {
     final db = await instance.database;
-    return await db.update(
-      'declarations',
-      data,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    int res = await db.update('declarations', {...data, 'synced': 0}, where: 'id = ?', whereArgs: [id]);
+    await _trySyncDeclaration(id);
+    return res;
+  }
+
+  Future<void> _trySyncDeclaration(int localId) async {
+    if (await isOnline) {
+      final db = await instance.database;
+      final List<Map<String, dynamic>> list = await db.query('declarations', where: 'id = ?', whereArgs: [localId]);
+      if (list.isNotEmpty) {
+        Map<String, dynamic> decl = list.first;
+        try {
+          Map<String, dynamic> dataToSync = Map.of(decl);
+          dataToSync.remove('id');
+          dataToSync.remove('synced');
+          await FirebaseFirestore.instance.collection('declarations').add(dataToSync);
+          await db.update('declarations', {'synced': 1}, where: 'id = ?', whereArgs: [localId]);
+        } catch (e) {
+          developer.log("Erreur lors de la synchronisation de la déclaration: $e", name: 'DatabaseHelper');
+        }
+      }
+    }
+  }
+
+  Future<void> syncAllLocalDeclarationsToFirestore() async {
+    if (await isOnline) {
+      final db = await instance.database;
+      final List<Map<String, dynamic>> unsynceds = await db.query('declarations', where: 'synced = ?', whereArgs: [0]);
+      for (var declaration in unsynceds) {
+        try {
+          Map<String, dynamic> dataToSync = Map.of(declaration);
+          dataToSync.remove('id');
+          dataToSync.remove('synced');
+          await FirebaseFirestore.instance.collection('declarations').add(dataToSync);
+          await db.update('declarations', {'synced': 1}, where: 'id = ?', whereArgs: [declaration['id']]);
+        } catch (e) {
+          developer.log("Erreur lors de la synchronisation des déclarations: $e", name: 'DatabaseHelper');
+        }
+      }
+    }
   }
 
   Future<List<Map<String, dynamic>>> getDeclarations() async {
@@ -137,48 +196,124 @@ class DatabaseHelper {
 
   Future<int> deleteDeclaration(int id) async {
     final db = await instance.database;
-    return await db.delete(
-      'declarations',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('declarations', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> insertUser(Map<String, dynamic> user) async {
     final db = await instance.database;
-    return await db.insert('users', user);
+    try {
+      return await db.insert('users', user);
+    } catch (e) {
+      developer.log("Erreur lors de l'insertion de l'utilisateur: $e", name: 'DatabaseHelper');
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>?> getUserByEmail(String email) async {
-    final db = await instance.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'users',
-      where: 'email = ?',
-      whereArgs: [email],
-    );
-    if (maps.isNotEmpty) {
-      return maps.first;
+    try {
+      final db = await instance.database;
+      final List<Map<String, dynamic>> maps = await db.query(
+        'users',
+        where: 'LOWER(email) = ?',
+        whereArgs: [email.toLowerCase().trim()],
+      );
+      if (maps.isNotEmpty) return maps.first;
+      return null;
+    } catch (e) {
+      developer.log("Erreur lors de la récupération de l'utilisateur par email: $e", name: 'DatabaseHelper');
+      return null;
     }
-    return null;
   }
 
   Future<int> updateUserProfilePicture(String email, String profilePicturePath) async {
-    final db = await instance.database;
-    return await db.update(
-      'users',
-      {'profilePicture': profilePicturePath},
-      where: 'email = ?',
-      whereArgs: [email],
-    );
+    try {
+      final db = await instance.database;
+      return await db.update(
+        'users',
+        {'profilePicture': profilePicturePath},
+        where: 'email = ?',
+        whereArgs: [email.toLowerCase().trim()],
+      );
+    } catch (e) {
+      developer.log("Erreur lors de la mise à jour de la photo de profil: $e", name: 'DatabaseHelper');
+      rethrow;
+    }
+  }
+
+  Future<int> updateUserFaceImagePath(String email, String faceImagePath) async {
+    try {
+      final db = await instance.database;
+      return await db.update(
+        'users',
+        {'faceImagePath': faceImagePath},
+        where: 'email = ?',
+        whereArgs: [email.toLowerCase().trim()],
+      );
+    } catch (e) {
+      developer.log("Erreur lors de la mise à jour du chemin de l'image faciale: $e", name: 'DatabaseHelper');
+      rethrow;
+    }
   }
 
   Future<int> updateUser(String oldEmail, Map<String, dynamic> newData) async {
-    final db = await instance.database;
-    return await db.update(
-      'users',
-      newData,
-      where: 'email = ?',
-      whereArgs: [oldEmail],
-    );
+    try {
+      final db = await instance.database;
+      return await db.update(
+        'users',
+        newData,
+        where: 'email = ?',
+        whereArgs: [oldEmail.toLowerCase().trim()],
+      );
+    } catch (e) {
+      developer.log("Erreur lors de la mise à jour de l'utilisateur: $e", name: 'DatabaseHelper');
+      rethrow;
+    }
+  }
+
+  Future<int> updateUserBiometricId(String email, String biometricId) async {
+    try {
+      final db = await instance.database;
+      return await db.update(
+        'users',
+        {'biometricId': biometricId},
+        where: 'email = ?',
+        whereArgs: [email.toLowerCase().trim()],
+      );
+    } catch (e) {
+      developer.log("Erreur lors de la mise à jour de l'ID biométrique: $e", name: 'DatabaseHelper');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getUserByBiometricId(String biometricId) async {
+    try {
+      final db = await instance.database;
+      final List<Map<String, dynamic>> maps = await db.query(
+        'users',
+        where: 'biometricId = ?',
+        whereArgs: [biometricId],
+      );
+      if (maps.isNotEmpty) return maps.first;
+      return null;
+    } catch (e) {
+      developer.log("Erreur lors de la récupération de l'utilisateur par ID biométrique: $e", name: 'DatabaseHelper');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getUserByFaceImagePath(String faceImagePath) async {
+    try {
+      final db = await instance.database;
+      final List<Map<String, dynamic>> maps = await db.query(
+        'users',
+        where: 'faceImagePath = ?',
+        whereArgs: [faceImagePath],
+      );
+      if (maps.isNotEmpty) return maps.first;
+      return null;
+    } catch (e) {
+      developer.log("Erreur lors de la récupération de l'utilisateur par chemin de l'image faciale: $e", name: 'DatabaseHelper');
+      return null;
+    }
   }
 }

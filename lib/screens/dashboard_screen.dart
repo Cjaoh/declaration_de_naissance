@@ -14,7 +14,7 @@ import '../db/database_helper.dart';
 
 class DashboardScreen extends StatefulWidget {
   static const String routeName = '/dashboard';
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
@@ -86,13 +86,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ? NetworkImage(_profilePicture!)
           : FileImage(File(_profilePicture!));
     } else {
-      backgroundImage = null; // Pas d’image default asset
+      backgroundImage = null; 
     }
 
     return DrawerHeader(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [const Color(0xFF4CAF9E), const Color(0xFF4CAF9E).withOpacity(0.7)],
+          colors: [const Color(0xFF4CAF9E), const Color(0xFF4CAF9E).withValues(alpha: 0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -106,7 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               radius: 30,
               backgroundImage: backgroundImage,
               child: backgroundImage == null
-                  ? Icon(Icons.person, size: 40, color: Colors.white.withOpacity(0.9))
+                  ? Icon(Icons.person, size: 40, color: Colors.white.withValues(alpha: 0.9))
                   : null,
             ),
           ),
@@ -120,7 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           Text(
             _userEmail ?? 'agent@example.com',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white.withOpacity(0.9)),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
           ),
         ],
       ),
@@ -198,7 +198,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Navigator.pop(context);
         onTap();
       },
-      hoverColor: const Color(0xFF4CAF9E).withOpacity(0.1),
+      hoverColor: const Color(0xFF4CAF9E).withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
     );
@@ -227,7 +227,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               image: DecorationImage(
                 image: const AssetImage('assets/images/5.jpg'),
                 fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.2), BlendMode.darken),
+                colorFilter: ColorFilter.mode(Colors.black.withValues(alpha: 0.2), BlendMode.darken),
               ),
             ),
           ),
@@ -260,8 +260,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: const Color(0xFF4CAF9E).withOpacity(0.9),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, -5))],
+        color: const Color(0xFF4CAF9E).withValues(alpha: 0.9),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, -5))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -365,11 +365,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: _currentPage == index ? 24 : 8,
             height: 8,
             decoration: BoxDecoration(
-              color: _currentPage == index ? const Color(0xFF4CAF9E) : Colors.grey.withOpacity(0.5),
+              color: _currentPage == index ? const Color(0xFF4CAF9E) : Colors.grey.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(4),
               boxShadow: [
                 if (_currentPage == index)
-                  BoxShadow(color: const Color(0xFF4CAF9E).withOpacity(0.5), blurRadius: 4, spreadRadius: 1),
+                  BoxShadow(color: const Color(0xFF4CAF9E).withValues(alpha: 0.5), blurRadius: 4, spreadRadius: 1),
               ],
             ),
           ),
@@ -500,31 +500,31 @@ class _DashboardItem extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
   const _DashboardItem({
-    Key? key,
+    super.key,
     required this.icon,
     required this.title,
     required this.color,
     required this.onTap,
-  }) : super(key: key);
+  });
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
-      hoverColor: color.withOpacity(0.1),
-      splashColor: color.withOpacity(0.2),
-      highlightColor: color.withOpacity(0.05),
+      hoverColor: color.withValues(alpha: 0.1),
+      splashColor: color.withValues(alpha: 0.2),
+      highlightColor: color.withValues(alpha: 0.05),
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 4,
-        shadowColor: color.withOpacity(0.3),
+        shadowColor: color.withValues(alpha: 0.3),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
+              colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.05)],
             ),
           ),
           child: Center(

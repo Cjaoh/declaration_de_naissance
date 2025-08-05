@@ -1,5 +1,5 @@
 class Naissance {
-  final int? id;
+  final int? id; 
   final String nom;
   final String prenom;
   final DateTime dateNaissance;
@@ -17,6 +17,7 @@ class Naissance {
     this.synced = false,
   });
 
+  
   factory Naissance.fromMap(Map<String, dynamic> map) => Naissance(
         id: map['id'],
         nom: map['nom'],
@@ -35,5 +36,24 @@ class Naissance {
         'lieu': lieu,
         'sexe': sexe,
         'synced': synced ? 1 : 0,
+      };
+
+ 
+  factory Naissance.fromFirestore(Map<String, dynamic> doc) => Naissance(
+        nom: doc['nom'],
+        prenom: doc['prenom'],
+        dateNaissance: DateTime.parse(doc['dateNaissance']),
+        lieu: doc['lieu'],
+        sexe: doc['sexe'],
+        synced: doc['synced'] ?? true,
+      );
+
+  Map<String, dynamic> toFirestore() => {
+        'nom': nom,
+        'prenom': prenom,
+        'dateNaissance': dateNaissance.toIso8601String(),
+        'lieu': lieu,
+        'sexe': sexe,
+        'synced': true, 
       };
 }

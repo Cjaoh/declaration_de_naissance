@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'auth_screen.dart'; 
+import 'auth_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   static const String routeName = '/';
 
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+enum ConnectionStatus { checking, connected, disconnected, error }
+
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   ConnectionStatus _connectionStatus = ConnectionStatus.checking;
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -21,11 +21,8 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..forward();
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut); // More subtle curve
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..forward();
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _checkConnection();
   }
 
@@ -37,25 +34,19 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _checkConnection() async {
     try {
-      final result = await Connectivity().checkConnectivity();
+      final connectivityResult = await Connectivity().checkConnectivity();
       if (mounted) {
         setState(() {
-          _connectionStatus = result != ConnectivityResult.none
-              ? ConnectionStatus.connected
-              : ConnectionStatus.disconnected;
+          _connectionStatus = connectivityResult != ConnectivityResult.none ? ConnectionStatus.connected : ConnectionStatus.disconnected;
         });
       }
-
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted) return;
-
       Navigator.pushReplacementNamed(
-          context,
-          _connectionStatus == ConnectionStatus.connected
-              ? AuthScreen.routeName // Use route names
-              : '/offline'); // Consider a dedicated offline screen
-    } catch (e) {
-      print("Connection check error: $e"); // Log the error
+        context,
+        _connectionStatus == ConnectionStatus.connected ? AuthScreen.routeName : '/offline',
+      );
+    } catch (_) {
       if (mounted) {
         setState(() => _connectionStatus = ConnectionStatus.error);
       }
@@ -81,7 +72,6 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Logo bien centré
                 ClipRRect(
                   borderRadius: BorderRadius.circular(60),
                   child: Image.asset(
@@ -92,20 +82,13 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text(
+                const Text(
                   "DECLARATION DE NAISSANCE",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
                     color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 4,
-                        color: Colors.black26,
-                        offset: Offset(1, 2),
-                      ),
-                    ],
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -120,21 +103,15 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildStatusText(BuildContext context) {
-    // Take BuildContext as parameter
     switch (_connectionStatus) {
       case ConnectionStatus.connected:
-        return Text('Connecté', style: TextStyle(color: Colors.green, fontSize: 12), textAlign: TextAlign.center,); // Smaller font size
+        return const Text('Connecté', style: TextStyle(color: Colors.green, fontSize: 12), textAlign: TextAlign.center);
       case ConnectionStatus.disconnected:
-        return Text('Mode hors ligne',
-            style: TextStyle(color: Colors.orange, fontSize: 12), textAlign: TextAlign.center,); // Smaller font size
+        return const Text('Mode hors ligne', style: TextStyle(color: Colors.orange, fontSize: 12), textAlign: TextAlign.center);
       case ConnectionStatus.error:
-        return Text('Erreur de connexion',
-            style: TextStyle(color: Colors.red, fontSize: 12), textAlign: TextAlign.center,); // Smaller font size
+        return const Text('Erreur de connexion', style: TextStyle(color: Colors.red, fontSize: 12), textAlign: TextAlign.center);
       default:
-        return Text('Vérification de la connexion...',
-            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12), textAlign: TextAlign.center,); // Use theme text color
+        return Text('Vérification de la connexion...', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12), textAlign: TextAlign.center);
     }
   }
 }
-
-enum ConnectionStatus { checking, connected, disconnected, error }

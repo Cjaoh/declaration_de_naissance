@@ -6,7 +6,7 @@ import 'declaration_form.dart';
 class DeclarationList extends StatefulWidget {
   static const String routeName = '/list';
 
-  const DeclarationList({Key? key}) : super(key: key);
+  const DeclarationList({super.key});
 
   @override
   State<DeclarationList> createState() => _DeclarationListState();
@@ -45,15 +45,15 @@ class _DeclarationListState extends State<DeclarationList> {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredDeclarations = _declarations.where((d) {
-        return (d['nom'] ?? '').toLowerCase().contains(query) ||
-            (d['prenom'] ?? '').toLowerCase().contains(query) ||
-            (d['nomPere'] ?? '').toLowerCase().contains(query) ||
-            (d['nomMere'] ?? '').toLowerCase().contains(query);
+        return (d['nom']?.toString().toLowerCase() ?? '').contains(query) ||
+            (d['prenom']?.toString().toLowerCase() ?? '').contains(query) ||
+            (d['nomPere']?.toString().toLowerCase() ?? '').contains(query) ||
+            (d['nomMere']?.toString().toLowerCase() ?? '').contains(query);
       }).toList();
     });
   }
 
-  void _editDeclaration(Map<String, dynamic> declaration) async {
+  Future<void> _editDeclaration(Map<String, dynamic> declaration) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -65,23 +65,17 @@ class _DeclarationListState extends State<DeclarationList> {
     }
   }
 
-  void _deleteDeclaration(int id) async {
+  Future<void> _deleteDeclaration(int id) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmation'),
         content: const Text('Voulez-vous vraiment supprimer cette déclaration ?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Supprimer',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
           ),
         ],
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -138,10 +132,7 @@ class _DeclarationListState extends State<DeclarationList> {
       children: [
         Icon(icon, color: color, size: 28),
         const SizedBox(height: 4),
-        Text(
-          count.toString(),
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
-        ),
+        Text(count.toString(), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
         Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
@@ -162,7 +153,6 @@ class _DeclarationListState extends State<DeclarationList> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
@@ -171,10 +161,8 @@ class _DeclarationListState extends State<DeclarationList> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Icon(
-                    decl['sexe'] == 'M' ? Icons.male : Icons.female,
-                    color: decl['sexe'] == 'M' ? Colors.blue : Colors.pink,
-                  ),
+                  Icon(decl['sexe'] == 'M' ? Icons.male : Icons.female,
+                      color: decl['sexe'] == 'M' ? Colors.blue : Colors.pink),
                 ],
               ),
               const SizedBox(height: 8),
@@ -182,14 +170,16 @@ class _DeclarationListState extends State<DeclarationList> {
                 'Né(e) le : ${DateFormat('dd/MM/yyyy').format(DateTime.parse(decl['dateNaissance']))} à ${decl['heureNaissance'] ?? 'HH:mm'}',
                 style: const TextStyle(color: Colors.grey),
               ),
-              Text('Lieu : ${decl['lieuNaissance'] ?? 'Non spécifié'}', style: const TextStyle(color: Colors.grey)),
+              Text('Lieu : ${decl['lieuNaissance'] ?? 'Non spécifié'}',
+                  style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 12),
               _buildParentInfo('Père', decl['nomPere'], decl['prenomPere'], decl['statutPere']),
               _buildParentInfo('Mère', decl['nomMere'], decl['prenomMere'], decl['statutMere']),
               if (decl['nomJeuneFilleMere'] != null && decl['nomJeuneFilleMere'].toString().isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Text('Nom de jeune fille de la mère : ${decl['nomJeuneFilleMere']}', style: const TextStyle(color: Colors.grey)),
+                  child: Text('Nom de jeune fille de la mère : ${decl['nomJeuneFilleMere']}',
+                      style: const TextStyle(color: Colors.grey)),
                 ),
               const SizedBox(height: 8),
               Row(
@@ -315,9 +305,7 @@ class _DeclarationListState extends State<DeclarationList> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const DeclarationForm()));
-          if (result == true) {
-            _loadDeclarations();
-          }
+          if (result == true) _loadDeclarations();
         },
         backgroundColor: const Color(0xFF4CAF9E),
         child: const Icon(Icons.add, color: Colors.white),

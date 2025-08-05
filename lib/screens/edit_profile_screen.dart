@@ -149,7 +149,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with SingleTicker
           onTap: _pickImage,
           child: CircleAvatar(
             radius: 60,
-            backgroundColor: Colors.white.withOpacity(0.2),
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
             backgroundImage: _profilePicturePath != null ? FileImage(File(_profilePicturePath!)) : null,
             child: _profilePicturePath == null ? const Icon(Icons.person, size: 60, color: Colors.white) : null,
           ),
@@ -221,10 +221,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> with SingleTicker
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withOpacity(0.9)),
-        prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.7)),
+        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+        prefixIcon: Icon(icon, color: Colors.white.withValues(alpha: 0.7)),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.15),
+        fillColor: Colors.white.withValues(alpha: 0.15),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -257,7 +257,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with SingleTicker
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 4,
-          shadowColor: Colors.black.withOpacity(0.3),
+          shadowColor: Colors.black.withValues(alpha: 0.3),
         ),
         child: _isLoading
             ? const CircularProgressIndicator(color: Colors.white)
