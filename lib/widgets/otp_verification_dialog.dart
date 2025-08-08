@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:developer' as developer;
+import '../services/email_service.dart';
 
 class OTPVerificationDialog extends StatefulWidget {
   final String email;
@@ -91,16 +92,26 @@ class _OTPVerificationDialogState extends State<OTPVerificationDialog> with Tick
   Future<void> _resendOTP() async {
     setState(() => _isResending = true);
     try {
-      developer.log('Renvoyer OTP à ${widget.email}', name: 'OTPVerificationDialog');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Code de vérification renvoyé !'),
-            backgroundColor: const Color(0xFF4CAF9E),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
+      // Générer un nouveau code OTP
+      final newOTP = EmailService().generateSecureOTP();
+      
+      // Envoyer le nouvel OTP par email
+      final success = await EmailService().sendOTPEmail(widget.email, newOTP);
+      
+      if (success) {
+        developer.log('Renvoyer OTP à ${widget.email}', name: 'OTPVerificationDialog');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Code de vérification renvoyé !'),
+              backgroundColor: const Color(0xFF4CAF9E),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        }
+      } else {
+        throw Exception('Échec de l\'envoi de l\'email');
       }
     } catch (e) {
       developer.log("Erreur lors de l'envoi de l'OTP: $e", name: 'OTPVerificationDialog');
@@ -149,9 +160,10 @@ class _OTPVerificationDialogState extends State<OTPVerificationDialog> with Tick
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -322,6 +334,7 @@ class _OTPVerificationDialogState extends State<OTPVerificationDialog> with Tick
                     ],
                   ),
                 ),
+              ),
               ),
             ),
           ),

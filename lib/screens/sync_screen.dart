@@ -38,8 +38,8 @@ class _SyncScreenState extends State<SyncScreen> with SingleTickerProviderStateM
 
     try {
       final tables = await syncService.getExistingTables();
-      if (!tables.contains('agents')) {
-        throw Exception('La table "agents" est absente dans la base locale.');
+      if (!tables.contains('users')) {
+        throw Exception('La table "users" est absente dans la base locale.');
       }
       await syncService.syncAllUnsynced();
       setState(() {
@@ -54,9 +54,9 @@ class _SyncScreenState extends State<SyncScreen> with SingleTickerProviderStateM
     } catch (e) {
       setState(() => _isSyncing = false);
       String message;
-      if (e.toString().contains('no such table: agents')) {
-        message = 'Erreur critique : la table "agents" est manquante. Veuillez vérifier l’installation.';
-      } else if (e.toString().contains('La table "agents" est absente')) {
+      if (e.toString().contains('no such table: users')) {
+        message = 'Erreur critique : la table "users" est manquante. Veuillez vérifier l’installation.';
+      } else if (e.toString().contains('La table "users" est absente')) {
         message = e.toString();
       } else {
         message = 'Erreur lors de la synchronisation : $e';

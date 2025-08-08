@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 class EditProfileScreen extends StatefulWidget {
+  static const String routeName = '/edit_profile';
+  
   final Map<String, dynamic> user;
 
   const EditProfileScreen({super.key, required this.user});

@@ -9,14 +9,14 @@ class AgentProvider with ChangeNotifier {
 
   Future<void> loadAgents() async {
     final db = await DatabaseService.instance.database;
-    final data = await db.query('agents');
+    final data = await db.query('users');
     _agents = data.map((e) => Agent.fromMap(e)).toList();
     notifyListeners();
   }
 
   Future<void> addAgent(Agent agent) async {
     final db = await DatabaseService.instance.database;
-    await db.insert('agents', agent.toMap());
+    await db.insert('users', agent.toMap());
     await loadAgents();
   }
 }

@@ -10,14 +10,14 @@ class DeclarationProvider with ChangeNotifier {
 
   Future<void> loadNaissances() async {
     final db = await DatabaseService.instance.database;
-    final data = await db.query('naissances');
+    final data = await db.query('declarations');
     _naissances = data.map((e) => Naissance.fromMap(e)).toList();
     notifyListeners();
   }
 
   Future<void> addNaissance(Naissance naissance) async {
     final db = await DatabaseService.instance.database;
-    await db.insert('naissances', naissance.toMap());
+    await db.insert('declarations', naissance.toMap());
     await loadNaissances();
   }
 }

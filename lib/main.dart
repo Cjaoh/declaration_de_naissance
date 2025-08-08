@@ -7,6 +7,7 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 
 import 'firebase_options.dart';
 import 'utils/translate.dart';
+import 'providers/theme_locale_provider.dart';
 
 import 'screens/splash_screen.dart';
 import 'screens/auth_screen.dart';
@@ -33,23 +34,6 @@ void main() async {
   );
 }
 
-class ThemeAndLocaleProvider extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.light;
-  Locale _locale = const Locale('fr');
-
-  ThemeMode get themeMode => _themeMode;
-  Locale get locale => _locale;
-
-  void setThemeMode(ThemeMode mode) {
-    _themeMode = mode;
-    notifyListeners();
-  }
-
-  void setLocale(Locale locale) {
-    _locale = locale;
-    notifyListeners();
-  }
-}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

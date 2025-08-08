@@ -26,14 +26,14 @@ class SyncService {
     }
   }
 
-  Future<void> syncAgents(List<Map<String, dynamic>> agents) async {
-    for (var agent in agents) {
+  Future<void> syncUsers(List<Map<String, dynamic>> users) async {
+    for (var user in users) {
       try {
-        var data = Map<String, dynamic>.from(agent);
+        var data = Map<String, dynamic>.from(user);
         data.remove('id');
-        await _firestore.collection('agents').add(data);
+        await _firestore.collection('users').add(data);
       } catch (e) {
-        developer.log("Erreur lors de la synchronisation de l'agent email=${agent['email']} : $e", name: 'SyncService');
+        developer.log("Erreur lors de la synchronisation de l'utilisateur email=${user['email']} : $e", name: 'SyncService');
       }
     }
   }
@@ -55,9 +55,9 @@ class SyncService {
     } catch (_) {}
     
     if (dbVersion >= 2) {
-      final unsyncedAgents = await db.query('agents');
-      if (unsyncedAgents.isNotEmpty) {
-        await syncAgents(unsyncedAgents);
+      final unsyncedUsers = await db.query('users');
+      if (unsyncedUsers.isNotEmpty) {
+        await syncUsers(unsyncedUsers);
       }
     }
   }

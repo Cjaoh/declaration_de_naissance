@@ -107,6 +107,9 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
       developer.log('Code OTP envoyé à $email : $_generatedOTP', name: 'RegisterScreen');
     } else {
       developer.log('Erreur lors de l\'envoi de l\'OTP à $email', name: 'RegisterScreen');
+      if (mounted) {
+        _snackBar('Erreur lors de l\'envoi du code OTP. Veuillez réessayer.', Colors.red.shade400);
+      }
     }
   }
 
@@ -181,6 +184,14 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
     final password = _controllers['password']!.text.trim();
     try {
       await _sendOTP(email);
+      
+      // Vérifier si l'OTP a été généré et envoyé
+      if (_generatedOTP == null) {
+        _snackBar('Erreur lors de la génération du code OTP. Veuillez réessayer.', Colors.red.shade400);
+        setState(() => _isLoading = false);
+        return;
+      }
+      
       String? enteredOTP = await showDialog<String>(
         context: context,
         barrierDismissible: false,
