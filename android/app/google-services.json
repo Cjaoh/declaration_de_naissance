@@ -12,7 +12,12 @@
           "package_name": "com.example.declaration_naissance"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "95444634348-6lbr67hciqkem3j997b4qr9t3egmtnvd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBBrmajP5AwcRnJJNEqh1QaThsPdhb_CYA"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "95444634348-6lbr67hciqkem3j997b4qr9t3egmtnvd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "95444634348-5iflra4n9j77tu99evgc207jelif5rsp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.declarationNaissance"
+              }
+            }
+          ]
         }
       }
     }
