@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../utils/translate.dart';
 import 'auth_screen.dart';
 import '../providers/theme_locale_provider.dart';
 
@@ -20,7 +19,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final Color _mainColor = const Color(0xFF4CAF9E);
-  final Color _accentColor = const Color(0xFFFF9800);
   String _appVersion = '1.0.0';
   bool _isBiometricEnabled = false;
   bool _isNotificationsEnabled = true;
@@ -40,13 +38,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final notifications = await _storage.read(key: 'notifications_enabled');
     final language = await _storage.read(key: 'language');
     final theme = await _storage.read(key: 'theme_mode');
-    
+
     setState(() {
       _isBiometricEnabled = biometric == 'true';
       _isNotificationsEnabled = notifications != 'false';
       _selectedLanguage = language ?? 'fr';
-      _selectedTheme = theme == 'dark' ? ThemeMode.dark : 
-                      theme == 'system' ? ThemeMode.system : ThemeMode.light;
+      _selectedTheme =
+          theme == 'dark'
+              ? ThemeMode.dark
+              : theme == 'system'
+              ? ThemeMode.system
+              : ThemeMode.light;
     });
   }
 
@@ -68,21 +70,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _logout() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Déconnexion'),
-        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Déconnexion'),
+            content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'Déconnexion',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Déconnexion', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
     );
 
     if (confirm == true) {
@@ -113,7 +121,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _selectedLanguage = languageCode;
     });
-    
+
     // In a real app, you would update the app's locale here
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -126,18 +134,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _changeTheme(ThemeMode themeMode) async {
-    final themeString = themeMode == ThemeMode.dark ? 'dark' : 
-                      themeMode == ThemeMode.system ? 'system' : 'light';
-    
+    final themeString =
+        themeMode == ThemeMode.dark
+            ? 'dark'
+            : themeMode == ThemeMode.system
+            ? 'system'
+            : 'light';
+
     await _saveSetting('theme_mode', themeString);
     setState(() {
       _selectedTheme = themeMode;
     });
-    
+
+    if (!mounted) return;
+
     // Update the app theme through the provider
     final provider = context.read<ThemeAndLocaleProvider>();
     provider.setThemeMode(themeMode);
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -184,7 +198,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_mainColor, _mainColor.withOpacity(0.8)],
+          colors: [_mainColor, _mainColor.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -242,9 +256,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildProfileHeader(),
-            
+
             _buildSectionHeader('Préférences'),
-            
+
             _buildSettingsTile(
               icon: Icons.language,
               title: 'Langue',
@@ -261,16 +275,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 underline: const SizedBox(),
               ),
             ),
-            
+
             _buildSettingsTile(
               icon: Icons.brightness_6,
               title: 'Thème',
               trailing: DropdownButton<ThemeMode>(
                 value: _selectedTheme,
                 items: const [
-                  DropdownMenuItem(value: ThemeMode.light, child: Text('Clair')),
-                  DropdownMenuItem(value: ThemeMode.dark, child: Text('Sombre')),
-                  DropdownMenuItem(value: ThemeMode.system, child: Text('Système')),
+                  DropdownMenuItem(
+                    value: ThemeMode.light,
+                    child: Text('Clair'),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.dark,
+                    child: Text('Sombre'),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.system,
+                    child: Text('Système'),
+                  ),
                 ],
                 onChanged: (value) {
                   if (value != null) _changeTheme(value);
@@ -278,35 +301,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 underline: const SizedBox(),
               ),
             ),
-            
+
             _buildSettingsTile(
               icon: Icons.fingerprint,
               title: 'Authentification biométrique',
               trailing: Switch(
                 value: _isBiometricEnabled,
-                activeColor: _mainColor,
+                activeThumbColor: _mainColor,
                 onChanged: (value) async {
                   await _saveSetting('biometric_enabled', value.toString());
                   setState(() => _isBiometricEnabled = value);
                 },
               ),
             ),
-            
+
             _buildSettingsTile(
               icon: Icons.notifications,
               title: 'Notifications',
               trailing: Switch(
                 value: _isNotificationsEnabled,
-                activeColor: _mainColor,
+                activeThumbColor: _mainColor,
                 onChanged: (value) async {
                   await _saveSetting('notifications_enabled', value.toString());
                   setState(() => _isNotificationsEnabled = value);
                 },
               ),
             ),
-            
+
             _buildSectionHeader('Sécurité'),
-            
+
             _buildSettingsTile(
               icon: Icons.lock,
               title: 'Changer le mot de passe',
@@ -321,7 +344,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
-            
+
             _buildSettingsTile(
               icon: Icons.security,
               title: 'Sécurité du compte',
@@ -336,15 +359,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
-            
+
             _buildSectionHeader('À propos'),
-            
+
             _buildSettingsTile(
               icon: Icons.info,
               title: 'Version de l\'application',
               trailing: Text('v$_appVersion'),
             ),
-            
+
             _buildSettingsTile(
               icon: Icons.description,
               title: 'Conditions d\'utilisation',
@@ -359,7 +382,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
-            
+
             _buildSettingsTile(
               icon: Icons.privacy_tip,
               title: 'Politique de confidentialité',
@@ -374,12 +397,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
-            
+
             _buildSectionHeader('Actions'),
-            
+
             Card(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text('Déconnexion'),
@@ -387,7 +412,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: _logout,
               ),
             ),
-            
+
             const SizedBox(height: 30),
           ],
         ),

@@ -12,7 +12,8 @@ class DeclarationForm extends StatefulWidget {
   State<DeclarationForm> createState() => _DeclarationFormState();
 }
 
-class _DeclarationFormState extends State<DeclarationForm> with TickerProviderStateMixin {
+class _DeclarationFormState extends State<DeclarationForm>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {};
   DateTime? _dateNaissance;
@@ -41,9 +42,18 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
   void initState() {
     super.initState();
     _initializeControllers();
-    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
-    _opacityAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
-    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _opacityAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutQuart),
     );
     _animationController.forward();
@@ -100,7 +110,11 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context, {required String controllerKey, bool isMarriageDate = false}) async {
+  Future<void> _selectDate(
+    BuildContext context, {
+    required String controllerKey,
+    bool isMarriageDate = false,
+  }) async {
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -130,58 +144,84 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
   }
 
   void _updateDateControllerText() {
-    if (_dateNaissance != null) _controllers['dateNaissance']!.text = DateFormat('dd/MM/yyyy').format(_dateNaissance!);
-    if (_dateNaissancePere != null) _controllers['dateNaissancePere']!.text = DateFormat('dd/MM/yyyy').format(_dateNaissancePere!);
-    if (_dateNaissanceMere != null) _controllers['dateNaissanceMere']!.text = DateFormat('dd/MM/yyyy').format(_dateNaissanceMere!);
+    if (_dateNaissance != null) {
+      _controllers['dateNaissance']!.text = DateFormat(
+        'dd/MM/yyyy',
+      ).format(_dateNaissance!);
+    }
+    if (_dateNaissancePere != null) {
+      _controllers['dateNaissancePere']!.text = DateFormat(
+        'dd/MM/yyyy',
+      ).format(_dateNaissancePere!);
+    }
+    if (_dateNaissanceMere != null) {
+      _controllers['dateNaissanceMere']!.text = DateFormat(
+        'dd/MM/yyyy',
+      ).format(_dateNaissanceMere!);
+    }
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_dateNaissance == null) {
-      _showValidationError('Veuillez sélectionner la date de naissance de l\'enfant');
+      _showValidationError(
+        'Veuillez sélectionner la date de naissance de l\'enfant',
+      );
       _tabController.animateTo(0);
       return;
     }
 
     if (_parentsMaries) {
       if (_dateMariageParents == null) {
-        _showValidationError('Veuillez sélectionner la date de mariage des parents');
+        _showValidationError(
+          'Veuillez sélectionner la date de mariage des parents',
+        );
         _tabController.animateTo(1);
         return;
       }
       if (_controllers['lieuMariageParents']!.text.isEmpty) {
-        _showValidationError('Veuillez indiquer le lieu de mariage des parents');
+        _showValidationError(
+          'Veuillez indiquer le lieu de mariage des parents',
+        );
         _tabController.animateTo(1);
         return;
       }
-      if (_controllers['nomPere']!.text.isEmpty || _controllers['prenomPere']!.text.isEmpty) {
+      if (_controllers['nomPere']!.text.isEmpty ||
+          _controllers['prenomPere']!.text.isEmpty) {
         _showValidationError('Veuillez compléter les informations du père');
         _tabController.animateTo(1);
         return;
       }
     }
 
-    if (_controllers['nomMere']!.text.isEmpty || _controllers['prenomMere']!.text.isEmpty) {
+    if (_controllers['nomMere']!.text.isEmpty ||
+        _controllers['prenomMere']!.text.isEmpty) {
       _showValidationError('Veuillez compléter les informations de la mère');
       _tabController.animateTo(1);
       return;
     }
 
     if (!_validatePieceId(_controllers['pieceIdPere']!.text)) {
-      _showValidationError('Numéro pièce d\'identité du père invalide (doit être alphanumérique et faire entre 9 et 12 caractères)');
+      _showValidationError(
+        'Numéro pièce d\'identité du père invalide (doit être alphanumérique et faire entre 9 et 12 caractères)',
+      );
       _tabController.animateTo(1);
       return;
     }
 
     if (!_validatePieceId(_controllers['pieceIdMere']!.text)) {
-      _showValidationError('Numéro pièce d\'identité de la mère invalide (doit être alphanumérique et faire entre 9 et 12 caractères)');
+      _showValidationError(
+        'Numéro pièce d\'identité de la mère invalide (doit être alphanumérique et faire entre 9 et 12 caractères)',
+      );
       _tabController.animateTo(1);
       return;
     }
 
     if (!_validatePieceId(_controllers['pieceIdDeclarant']!.text)) {
-      _showValidationError('Numéro pièce d\'identité du déclarant invalide (doit être alphanumérique et faire entre 9 et 12 caractères)');
+      _showValidationError(
+        'Numéro pièce d\'identité du déclarant invalide (doit être alphanumérique et faire entre 9 et 12 caractères)',
+      );
       _tabController.animateTo(2);
       return;
     }
@@ -234,16 +274,21 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
 
     try {
       if (widget.declaration != null) {
-        await DatabaseHelper.instance.updateDeclaration(widget.declaration!['id'], data);
+        await DatabaseHelper.instance.updateDeclaration(
+          widget.declaration!['id'],
+          data,
+        );
       } else {
         await DatabaseHelper.instance.insertDeclaration(data);
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Déclaration enregistrée avec succès!'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: _mainColor,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Déclaration enregistrée avec succès!'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: _mainColor,
+        ),
+      );
       Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
@@ -255,11 +300,13 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
   }
 
   void _showValidationError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.red,
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   bool _validatePieceId(String value) {
@@ -272,13 +319,17 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
     final d = widget.declaration!;
     _controllers['nom']!.text = d['nom'] ?? '';
     _controllers['prenom']!.text = d['prenom'] ?? '';
-    _dateNaissance = d['dateNaissance'] != null ? DateTime.parse(d['dateNaissance']) : null;
+    _dateNaissance =
+        d['dateNaissance'] != null ? DateTime.parse(d['dateNaissance']) : null;
     _controllers['lieuNaissance']!.text = d['lieuNaissance'] ?? '';
     _controllers['heureNaissance']!.text = d['heureNaissance'] ?? '';
     _sexe = d['sexe'];
     _controllers['nomPere']!.text = d['nomPere'] ?? '';
     _controllers['prenomPere']!.text = d['prenomPere'] ?? '';
-    _dateNaissancePere = d['dateNaissancePere'] != null ? DateTime.parse(d['dateNaissancePere']) : null;
+    _dateNaissancePere =
+        d['dateNaissancePere'] != null
+            ? DateTime.parse(d['dateNaissancePere'])
+            : null;
     _controllers['lieuNaissancePere']!.text = d['lieuNaissancePere'] ?? '';
     _controllers['professionPere']!.text = d['professionPere'] ?? '';
     _controllers['nationalitePere']!.text = d['nationalitePere'] ?? '';
@@ -288,7 +339,10 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
     _controllers['nomMere']!.text = d['nomMere'] ?? '';
     _controllers['prenomMere']!.text = d['prenomMere'] ?? '';
     _controllers['nomJeuneFilleMere']!.text = d['nomJeuneFilleMere'] ?? '';
-    _dateNaissanceMere = d['dateNaissanceMere'] != null ? DateTime.parse(d['dateNaissanceMere']) : null;
+    _dateNaissanceMere =
+        d['dateNaissanceMere'] != null
+            ? DateTime.parse(d['dateNaissanceMere'])
+            : null;
     _controllers['lieuNaissanceMere']!.text = d['lieuNaissanceMere'] ?? '';
     _controllers['professionMere']!.text = d['professionMere'] ?? '';
     _controllers['nationaliteMere']!.text = d['nationaliteMere'] ?? '';
@@ -297,7 +351,10 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
     _statutMere = d['statutMere'] ?? 'Vivant';
     _statutMaritalParents = d['statutMarital'];
     _parentsMaries = d['parentsMaries'] == 1;
-    _dateMariageParents = d['dateMariageParents'] != null ? DateTime.parse(d['dateMariageParents']) : null;
+    _dateMariageParents =
+        d['dateMariageParents'] != null
+            ? DateTime.parse(d['dateMariageParents'])
+            : null;
     _showMarriageDetails = _parentsMaries;
     _controllers['lieuMariageParents']!.text = d['lieuMariageParents'] ?? '';
     _controllers['nomDeclarant']!.text = d['nomDeclarant'] ?? '';
@@ -305,12 +362,14 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
     _controllers['adresseDeclarant']!.text = d['adresseDeclarant'] ?? '';
     _controllers['lienDeclarant']!.text = d['lienDeclarant'] ?? '';
     _controllers['pieceIdDeclarant']!.text = d['pieceIdDeclarant'] ?? '';
-    _controllers['certificatAccouchement']!.text = d['certificatAccouchement'] ?? '';
+    _controllers['certificatAccouchement']!.text =
+        d['certificatAccouchement'] ?? '';
     _controllers['livretFamille']!.text = d['livretFamille'] ?? '';
     _controllers['acteNaissPere']!.text = d['acteNaissPere'] ?? '';
     _controllers['acteNaissMere']!.text = d['acteNaissMere'] ?? '';
     _controllers['acteReconnaissance']!.text = d['acteReconnaissance'] ?? '';
-    _controllers['certificatNationalite']!.text = d['certificatNationalite'] ?? '';
+    _controllers['certificatNationalite']!.text =
+        d['certificatNationalite'] ?? '';
     _updateDateControllerText();
   }
 
@@ -335,7 +394,10 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
           ),
           filled: true,
           fillColor: _backgroundColor,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: _borderColor),
@@ -346,12 +408,15 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
           ),
         ),
         keyboardType: keyboardType,
-        validator: isRequired
-            ? (value) {
-                if (value == null || value.trim().isEmpty) return 'Champ obligatoire';
-                return null;
-              }
-            : null,
+        validator:
+            isRequired
+                ? (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Champ obligatoire';
+                  }
+                  return null;
+                }
+                : null,
         onChanged: onChanged,
       ),
     );
@@ -377,7 +442,10 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
           filled: true,
           fillColor: _backgroundColor,
           suffixIcon: Icon(Icons.calendar_today, color: _mainColor),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: _borderColor),
@@ -387,8 +455,17 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
             borderSide: BorderSide(color: _mainColor, width: 2),
           ),
         ),
-        validator: isRequired ? (value) => value == null || value.isEmpty ? 'Champ obligatoire' : null : null,
-        onTap: () async => await _selectDate(context, controllerKey: controllerKey, isMarriageDate: isMarriageDate),
+        validator:
+            isRequired
+                ? (value) =>
+                    value == null || value.isEmpty ? 'Champ obligatoire' : null
+                : null,
+        onTap:
+            () async => await _selectDate(
+              context,
+              controllerKey: controllerKey,
+              isMarriageDate: isMarriageDate,
+            ),
       ),
     );
   }
@@ -403,7 +480,7 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         decoration: InputDecoration(
           labelText: label,
           border: OutlineInputBorder(
@@ -412,7 +489,10 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
           ),
           filled: true,
           fillColor: _backgroundColor,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: _borderColor),
@@ -424,7 +504,10 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
         ),
         items: items,
         onChanged: onChanged,
-        validator: isRequired ? (value) => value == null ? 'Champ obligatoire' : null : null,
+        validator:
+            isRequired
+                ? (value) => value == null ? 'Champ obligatoire' : null
+                : null,
         style: TextStyle(color: _textColor),
       ),
     );
@@ -441,14 +524,19 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
               child: ChoiceChip(
                 label: const Text('Mariés'),
                 selected: _parentsMaries,
-                onSelected: (_) => setState(() {
-                  _parentsMaries = true;
-                  _statutMaritalParents = 'Marié';
-                  _showMarriageDetails = true;
-                }),
+                onSelected:
+                    (_) => setState(() {
+                      _parentsMaries = true;
+                      _statutMaritalParents = 'Marié';
+                      _showMarriageDetails = true;
+                    }),
                 selectedColor: _mainColor,
-                labelStyle: TextStyle(color: _parentsMaries ? Colors.white : _textColor),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                labelStyle: TextStyle(
+                  color: _parentsMaries ? Colors.white : _textColor,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -456,43 +544,53 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
               child: ChoiceChip(
                 label: const Text('Non mariés'),
                 selected: !_parentsMaries,
-                onSelected: (_) => setState(() {
-                  _parentsMaries = false;
-                  _statutMaritalParents = 'Non marié';
-                  _showMarriageDetails = false;
-                }),
+                onSelected:
+                    (_) => setState(() {
+                      _parentsMaries = false;
+                      _statutMaritalParents = 'Non marié';
+                      _showMarriageDetails = false;
+                    }),
                 selectedColor: _mainColor,
-                labelStyle: TextStyle(color: !_parentsMaries ? Colors.white : _textColor),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                labelStyle: TextStyle(
+                  color: !_parentsMaries ? Colors.white : _textColor,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ],
         ),
         AnimatedSize(
           duration: const Duration(milliseconds: 300),
-          child: _showMarriageDetails
-              ? Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildDatePickerTextField(
-                      controllerKey: 'dateMariageParents',
-                      label: 'Date de mariage',
-                      isMarriageDate: true,
-                    ),
-                    _buildTextField(
-                      controllerKey: 'lieuMariageParents',
-                      label: 'Lieu de mariage',
-                      hint: 'Ville où les parents se sont mariés',
-                    ),
-                  ],
-                )
-              : const SizedBox.shrink(),
+          child:
+              _showMarriageDetails
+                  ? Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      _buildDatePickerTextField(
+                        controllerKey: 'dateMariageParents',
+                        label: 'Date de mariage',
+                        isMarriageDate: true,
+                      ),
+                      _buildTextField(
+                        controllerKey: 'lieuMariageParents',
+                        label: 'Lieu de mariage',
+                        hint: 'Ville où les parents se sont mariés',
+                      ),
+                    ],
+                  )
+                  : const SizedBox.shrink(),
         ),
       ],
     );
   }
 
-  Widget _buildParentStatusField(String parent, String? value, ValueChanged<String?> onChanged) {
+  Widget _buildParentStatusField(
+    String parent,
+    String? value,
+    ValueChanged<String?> onChanged,
+  ) {
     return _buildDropdownField(
       value: value,
       label: 'Statut du $parent',
@@ -540,14 +638,20 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
         _buildSectionTitle("Informations de l'enfant"),
         _buildTextField(controllerKey: 'nom', label: "Nom de l'enfant"),
         _buildTextField(controllerKey: 'prenom', label: "Prénom de l'enfant"),
-        _buildDatePickerTextField(controllerKey: 'dateNaissance', label: 'Date de naissance'),
+        _buildDatePickerTextField(
+          controllerKey: 'dateNaissance',
+          label: 'Date de naissance',
+        ),
         _buildTextField(
           controllerKey: 'heureNaissance',
           label: 'Heure de naissance',
           hint: 'HH:mm',
           keyboardType: TextInputType.datetime,
         ),
-        _buildTextField(controllerKey: 'lieuNaissance', label: "Lieu de naissance"),
+        _buildTextField(
+          controllerKey: 'lieuNaissance',
+          label: "Lieu de naissance",
+        ),
         _buildDropdownField(
           value: _sexe,
           label: 'Sexe',
@@ -569,26 +673,93 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
         _buildMaritalStatusField(),
         if (_parentsMaries) ...[
           _buildSectionTitle("Informations du père"),
-          _buildTextField(controllerKey: 'nomPere', label: 'Nom du père', isRequired: true),
-          _buildTextField(controllerKey: 'prenomPere', label: 'Prénom du père', isRequired: true),
-          _buildDatePickerTextField(controllerKey: 'dateNaissancePere', label: 'Date de naissance du père', isRequired: false),
-          _buildTextField(controllerKey: 'lieuNaissancePere', label: 'Lieu de naissance du père', isRequired: false),
-          _buildTextField(controllerKey: 'professionPere', label: 'Profession du père', isRequired: false),
-          _buildTextField(controllerKey: 'nationalitePere', label: 'Nationalité du père', isRequired: false),
-          _buildTextField(controllerKey: 'adressePere', label: 'Adresse du père', isRequired: false),
-          _buildTextField(controllerKey: 'pieceIdPere', label: 'Numéro pièce d\'identité du père', isRequired: false),
-          _buildParentStatusField('père', _statutPere, (value) => setState(() => _statutPere = value)),
+          _buildTextField(
+            controllerKey: 'nomPere',
+            label: 'Nom du père',
+            isRequired: true,
+          ),
+          _buildTextField(
+            controllerKey: 'prenomPere',
+            label: 'Prénom du père',
+            isRequired: true,
+          ),
+          _buildDatePickerTextField(
+            controllerKey: 'dateNaissancePere',
+            label: 'Date de naissance du père',
+            isRequired: false,
+          ),
+          _buildTextField(
+            controllerKey: 'lieuNaissancePere',
+            label: 'Lieu de naissance du père',
+            isRequired: false,
+          ),
+          _buildTextField(
+            controllerKey: 'professionPere',
+            label: 'Profession du père',
+            isRequired: false,
+          ),
+          _buildTextField(
+            controllerKey: 'nationalitePere',
+            label: 'Nationalité du père',
+            isRequired: false,
+          ),
+          _buildTextField(
+            controllerKey: 'adressePere',
+            label: 'Adresse du père',
+            isRequired: false,
+          ),
+          _buildTextField(
+            controllerKey: 'pieceIdPere',
+            label: 'Numéro pièce d\'identité du père',
+            isRequired: false,
+          ),
+          _buildParentStatusField(
+            'père',
+            _statutPere,
+            (value) => setState(() => _statutPere = value),
+          ),
         ],
         _buildSectionTitle("Informations de la mère"),
         _buildTextField(controllerKey: 'nomMere', label: 'Nom de la mère'),
-        _buildTextField(controllerKey: 'prenomMere', label: 'Prénom de la mère'),
-        _buildDatePickerTextField(controllerKey: 'dateNaissanceMere', label: 'Date de naissance de la mère', isRequired: false),
-        _buildTextField(controllerKey: 'lieuNaissanceMere', label: 'Lieu de naissance de la mère', isRequired: false),
-        _buildTextField(controllerKey: 'professionMere', label: 'Profession de la mère', isRequired: false),
-        _buildTextField(controllerKey: 'nationaliteMere', label: 'Nationalité de la mère', isRequired: false),
-        _buildTextField(controllerKey: 'adresseMere', label: 'Adresse de la mère', isRequired: false),
-        _buildTextField(controllerKey: 'pieceIdMere', label: 'Numéro pièce d\'identité de la mère', isRequired: false),
-        _buildParentStatusField('mère', _statutMere, (value) => setState(() => _statutMere = value)),
+        _buildTextField(
+          controllerKey: 'prenomMere',
+          label: 'Prénom de la mère',
+        ),
+        _buildDatePickerTextField(
+          controllerKey: 'dateNaissanceMere',
+          label: 'Date de naissance de la mère',
+          isRequired: false,
+        ),
+        _buildTextField(
+          controllerKey: 'lieuNaissanceMere',
+          label: 'Lieu de naissance de la mère',
+          isRequired: false,
+        ),
+        _buildTextField(
+          controllerKey: 'professionMere',
+          label: 'Profession de la mère',
+          isRequired: false,
+        ),
+        _buildTextField(
+          controllerKey: 'nationaliteMere',
+          label: 'Nationalité de la mère',
+          isRequired: false,
+        ),
+        _buildTextField(
+          controllerKey: 'adresseMere',
+          label: 'Adresse de la mère',
+          isRequired: false,
+        ),
+        _buildTextField(
+          controllerKey: 'pieceIdMere',
+          label: 'Numéro pièce d\'identité de la mère',
+          isRequired: false,
+        ),
+        _buildParentStatusField(
+          'mère',
+          _statutMere,
+          (value) => setState(() => _statutMere = value),
+        ),
       ],
     );
   }
@@ -598,11 +769,26 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Informations du déclarant'),
-        _buildTextField(controllerKey: 'nomDeclarant', label: 'Nom du déclarant'),
-        _buildTextField(controllerKey: 'prenomDeclarant', label: 'Prénom du déclarant'),
-        _buildTextField(controllerKey: 'adresseDeclarant', label: 'Adresse du déclarant'),
-        _buildTextField(controllerKey: 'lienDeclarant', label: 'Lien avec l\'enfant'),
-        _buildTextField(controllerKey: 'pieceIdDeclarant', label: 'Numéro pièce d\'identité du déclarant'),
+        _buildTextField(
+          controllerKey: 'nomDeclarant',
+          label: 'Nom du déclarant',
+        ),
+        _buildTextField(
+          controllerKey: 'prenomDeclarant',
+          label: 'Prénom du déclarant',
+        ),
+        _buildTextField(
+          controllerKey: 'adresseDeclarant',
+          label: 'Adresse du déclarant',
+        ),
+        _buildTextField(
+          controllerKey: 'lienDeclarant',
+          label: 'Lien avec l\'enfant',
+        ),
+        _buildTextField(
+          controllerKey: 'pieceIdDeclarant',
+          label: 'Numéro pièce d\'identité du déclarant',
+        ),
       ],
     );
   }
@@ -612,12 +798,36 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Documents justificatifs'),
-        _buildTextField(controllerKey: 'certificatAccouchement', label: 'Certificat d\'accouchement', isRequired: false),
-        _buildTextField(controllerKey: 'livretFamille', label: 'Livret de famille', isRequired: false),
-        _buildTextField(controllerKey: 'acteNaissPere', label: 'Acte de naissance du père', isRequired: false),
-        _buildTextField(controllerKey: 'acteNaissMere', label: 'Acte de naissance de la mère', isRequired: false),
-        _buildTextField(controllerKey: 'acteReconnaissance', label: 'Acte de reconnaissance', isRequired: false),
-        _buildTextField(controllerKey: 'certificatNationalite', label: 'Certificat de nationalité', isRequired: false),
+        _buildTextField(
+          controllerKey: 'certificatAccouchement',
+          label: 'Certificat d\'accouchement',
+          isRequired: false,
+        ),
+        _buildTextField(
+          controllerKey: 'livretFamille',
+          label: 'Livret de famille',
+          isRequired: false,
+        ),
+        _buildTextField(
+          controllerKey: 'acteNaissPere',
+          label: 'Acte de naissance du père',
+          isRequired: false,
+        ),
+        _buildTextField(
+          controllerKey: 'acteNaissMere',
+          label: 'Acte de naissance de la mère',
+          isRequired: false,
+        ),
+        _buildTextField(
+          controllerKey: 'acteReconnaissance',
+          label: 'Acte de reconnaissance',
+          isRequired: false,
+        ),
+        _buildTextField(
+          controllerKey: 'certificatNationalite',
+          label: 'Certificat de nationalité',
+          isRequired: false,
+        ),
       ],
     );
   }
@@ -682,10 +892,22 @@ class _DeclarationFormState extends State<DeclarationForm> with TickerProviderSt
               controller: _tabController,
               physics: const BouncingScrollPhysics(),
               children: [
-                SingleChildScrollView(padding: const EdgeInsets.all(20), child: _buildChildInfo()),
-                SingleChildScrollView(padding: const EdgeInsets.all(20), child: _buildParentsInfo()),
-                SingleChildScrollView(padding: const EdgeInsets.all(20), child: _buildDeclarantInfo()),
-                SingleChildScrollView(padding: const EdgeInsets.all(20), child: _buildDocuments()),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: _buildChildInfo(),
+                ),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: _buildParentsInfo(),
+                ),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: _buildDeclarantInfo(),
+                ),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: _buildDocuments(),
+                ),
               ],
             ),
           ),

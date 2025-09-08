@@ -36,30 +36,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadDashboardData() async {
     setState(() => _isLoading = true);
-    
+
     try {
       // Get current user email
       final email = await _storage.read(key: 'user_email');
       if (email != null) {
         setState(() => _currentUserEmail = email);
       }
-      
+
       // Load declarations data
       final data = await DatabaseHelper.instance.getDeclarations();
-      
+
       // Calculate statistics
       final today = DateTime.now();
       final todayStart = DateTime(today.year, today.month, today.day);
-      
+
       setState(() {
         _totalDeclarations = data.length;
-        _todayDeclarations = data.where((d) {
-          if (d['dateNaissance'] == null) return false;
-          final declDate = DateTime.parse(d['dateNaissance']).toLocal();
-          final declDay = DateTime(declDate.year, declDate.month, declDate.day);
-          return declDay.isAtSameMomentAs(todayStart);
-        }).length;
-        
+        _todayDeclarations =
+            data.where((d) {
+              if (d['dateNaissance'] == null) return false;
+              final declDate = DateTime.parse(d['dateNaissance']).toLocal();
+              final declDay = DateTime(
+                declDate.year,
+                declDate.month,
+                declDate.day,
+              );
+              return declDay.isAtSameMomentAs(todayStart);
+            }).length;
+
         _syncPending = data.where((d) => d['synced'] == 0).length;
         _recentDeclarations = data.reversed.take(5).toList();
         _isLoading = false;
@@ -100,7 +105,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Icon(Icons.person, size: 28, color: Color(0xFF4CAF9E)),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.settings, color: Colors.white, size: 28),
+                  icon: const Icon(
+                    Icons.settings,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                   onPressed: () => Navigator.pushNamed(context, '/settings'),
                 ),
               ],
@@ -153,19 +162,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 8),
             Text(
               value.toString(),
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
             ),
           ],
         ),
@@ -212,7 +215,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   icon: Icons.list,
                   label: 'Toutes les déclarations',
                   color: _accentColor,
-                  onTap: () => Navigator.pushNamed(context, DeclarationList.routeName),
+                  onTap:
+                      () => Navigator.pushNamed(
+                        context,
+                        DeclarationList.routeName,
+                      ),
                 ),
               ),
             ],
@@ -225,7 +232,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   icon: Icons.sync,
                   label: 'Synchroniser',
                   color: const Color(0xFF9C27B0),
-                  onTap: () => Navigator.pushNamed(context, SyncScreen.routeName),
+                  onTap:
+                      () => Navigator.pushNamed(context, SyncScreen.routeName),
                 ),
               ),
               const SizedBox(width: 12),
@@ -234,7 +242,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   icon: Icons.person,
                   label: 'Profil',
                   color: const Color(0xFF03A9F4),
-                  onTap: () => Navigator.pushNamed(context, EditProfileScreen.routeName),
+                  onTap:
+                      () => Navigator.pushNamed(
+                        context,
+                        EditProfileScreen.routeName,
+                      ),
                 ),
               ),
             ],
@@ -296,16 +308,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (_recentDeclarations.isEmpty)
             Card(
               elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: const Padding(
                 padding: EdgeInsets.all(24),
                 child: Center(
                   child: Text(
                     'Aucune déclaration enregistrée',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                 ),
               ),
@@ -320,7 +331,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 return Card(
                   elevation: 2,
                   margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(16),
                     title: Text(
@@ -339,7 +352,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => DeclarationForm(declaration: decl),
+                          builder:
+                              (context) => DeclarationForm(declaration: decl),
                         ),
                       ).then((result) {
                         if (result == true) _loadDashboardData();
@@ -358,7 +372,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _syncPending > 0 ? Colors.orange.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+        color:
+            _syncPending > 0
+                ? Colors.orange.withValues(alpha: 0.1)
+                : Colors.green.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _syncPending > 0 ? Colors.orange : Colors.green,
@@ -378,29 +395,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _syncPending > 0 
-                    ? 'Synchronisation en attente' 
-                    : 'Toutes les données sont synchronisées',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  _syncPending > 0
+                      ? 'Synchronisation en attente'
+                      : 'Toutes les données sont synchronisées',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _syncPending > 0
-                    ? '$_syncPending déclaration(s) en attente de synchronisation'
-                    : 'Aucune donnée en attente',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                      ? '$_syncPending déclaration(s) en attente de synchronisation'
+                      : 'Aucune donnée en attente',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
           ),
           if (_syncPending > 0)
             TextButton(
-              onPressed: () => Navigator.pushNamed(context, SyncScreen.routeName),
+              onPressed:
+                  () => Navigator.pushNamed(context, SyncScreen.routeName),
               child: const Text('Synchroniser'),
             ),
         ],
@@ -413,59 +426,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: _loadDashboardData,
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _buildStatsCard(
-                              Icons.people,
-                              'Total',
-                              _totalDeclarations,
-                              _mainColor,
+        child:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatsCard(
+                                Icons.people,
+                                'Total',
+                                _totalDeclarations,
+                                _mainColor,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildStatsCard(
-                              Icons.today,
-                              "Aujourd'hui",
-                              _todayDeclarations,
-                              _accentColor,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildStatsCard(
+                                Icons.today,
+                                "Aujourd'hui",
+                                _todayDeclarations,
+                                _accentColor,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildStatsCard(
-                              Icons.cloud_upload,
-                              'À synchroniser',
-                              _syncPending,
-                              Colors.orange,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildStatsCard(
+                                Icons.cloud_upload,
+                                'À synchroniser',
+                                _syncPending,
+                                Colors.orange,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _buildSyncStatus(),
-                    ),
-                    const SizedBox(height: 20),
-                    _buildQuickActions(),
-                    _buildRecentDeclarations(),
-                    const SizedBox(height: 20),
-                  ],
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _buildSyncStatus(),
+                      ),
+                      const SizedBox(height: 20),
+                      _buildQuickActions(),
+                      _buildRecentDeclarations(),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
-              ),
       ),
     );
   }

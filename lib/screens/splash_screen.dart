@@ -13,7 +13,8 @@ class SplashScreen extends StatefulWidget {
 
 enum ConnectionStatus { checking, connected, disconnected, error }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   ConnectionStatus _connectionStatus = ConnectionStatus.checking;
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -21,7 +22,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..forward();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..forward();
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _checkConnection();
   }
@@ -37,14 +41,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       final connectivityResult = await Connectivity().checkConnectivity();
       if (mounted) {
         setState(() {
-          _connectionStatus = connectivityResult != ConnectivityResult.none ? ConnectionStatus.connected : ConnectionStatus.disconnected;
+          _connectionStatus =
+              !connectivityResult.contains(ConnectivityResult.none)
+                  ? ConnectionStatus.connected
+                  : ConnectionStatus.disconnected;
         });
       }
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted) return;
       Navigator.pushReplacementNamed(
         context,
-        _connectionStatus == ConnectionStatus.connected ? AuthScreen.routeName : '/offline',
+        _connectionStatus == ConnectionStatus.connected
+            ? AuthScreen.routeName
+            : '/offline',
       );
     } catch (_) {
       if (mounted) {
@@ -105,13 +114,32 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget _buildStatusText(BuildContext context) {
     switch (_connectionStatus) {
       case ConnectionStatus.connected:
-        return const Text('Connecté', style: TextStyle(color: Colors.green, fontSize: 12), textAlign: TextAlign.center);
+        return const Text(
+          'Connecté',
+          style: TextStyle(color: Colors.green, fontSize: 12),
+          textAlign: TextAlign.center,
+        );
       case ConnectionStatus.disconnected:
-        return const Text('Mode hors ligne', style: TextStyle(color: Colors.orange, fontSize: 12), textAlign: TextAlign.center);
+        return const Text(
+          'Mode hors ligne',
+          style: TextStyle(color: Colors.orange, fontSize: 12),
+          textAlign: TextAlign.center,
+        );
       case ConnectionStatus.error:
-        return const Text('Erreur de connexion', style: TextStyle(color: Colors.red, fontSize: 12), textAlign: TextAlign.center);
+        return const Text(
+          'Erreur de connexion',
+          style: TextStyle(color: Colors.red, fontSize: 12),
+          textAlign: TextAlign.center,
+        );
       default:
-        return Text('Vérification de la connexion...', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12), textAlign: TextAlign.center);
+        return Text(
+          'Vérification de la connexion...',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+            fontSize: 12,
+          ),
+          textAlign: TextAlign.center,
+        );
     }
   }
 }
